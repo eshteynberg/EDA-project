@@ -1,4 +1,5 @@
 library(tidyverse)
+library(ggrepel)
 mlb_batted_balls <- read_csv("https://raw.githubusercontent.com/36-SURE/2025/main/data/mlb_batted_balls.csv")
 view(mlb_batted_balls)
 
@@ -63,5 +64,8 @@ mlb_batted_balls |>
     avg_launch_speed = mean(launch_speed),
     n = n()
   ) |>
-  arrange(desc(avg_launch_speed))
+  ggplot(aes(x = n, y = avg_launch_speed)) +
+  geom_point(alpha = 0.2) +
+  #geom_text(aes(label=ifelse(avg_launch_speed>93.6 & n > 250,as.character(batter_name), ''))) +
+  geom_text_repel(aes(label=ifelse((avg_launch_speed>93.6 & n > 250) | avg_launch_speed > 105,as.character(batter_name), '')))
 
