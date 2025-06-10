@@ -69,3 +69,25 @@ mlb_batted_balls |>
   #geom_text(aes(label=ifelse(avg_launch_speed>93.6 & n > 250,as.character(batter_name), ''))) +
   geom_text_repel(aes(label=ifelse((avg_launch_speed>93.6 & n > 250) | avg_launch_speed > 105,as.character(batter_name), '')))
 
+install.packages("palmerpenguins")
+
+glimpse(mlb_batted_balls)
+
+cor(mlb_batted_balls$release_speed, 
+    mlb_batted_balls$effective_speed, 
+    use = "complete.obs")
+
+mlb_batted_balls |>
+  filter(!is.na(hit_coord_x), !is.na(hit_coord_y), !is.na(events), batter_name == "Devers, Rafael") |>
+  group_by(events) |>
+  ggplot(aes(x = hit_coord_x, y = -1 *hit_coord_y)) +
+  geom_point(aes(color = events, alpha=0.001))
+
+mlb_batted_balls |>
+  filter(!is.na(balls), !is.na(strikes), !is.na(events)) |>
+  group_by(events) |>
+  summarize(hr = )
+  ggplot(aes(x = strikes, y = balls)) +
+  geom_tile(aes(fill = events))
+
+
