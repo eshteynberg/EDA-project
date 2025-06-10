@@ -90,4 +90,67 @@ mlb_batted_balls |>
   ggplot(aes(x = strikes, y = balls)) +
   geom_tile(aes(fill = events))
 
+library(shiny)
+library(plotly)
+library(dplyr)
 
+  mlb_summary <- mlb_batted_balls |>
+    group_by(batter_name) |>
+    summarize(
+      avg_launch_speed = mean(launch_speed, na.rm = TRUE),
+      bip_value = (
+        sum(events == "single", na.rm = TRUE) * 1 +
+          sum(events == "double", na.rm = TRUE) * 2 +
+          sum(events == "triple", na.rm = TRUE) * 3 +
+          sum(events == "home_run", na.rm = TRUE) * 4
+      ) / n(),
+      line_drive_pct = sum(bb_type == "line_drive", na.rm = TRUE) / n() * 100,
+      balls_in_play = n(),
+      bip_hit_pct = (sum(events == "single", na.rm = TRUE) +
+        sum(events == "double", na.rm = TRUE) +
+        sum(events == "triple", na.rm = TRUE) +
+        sum(events == "home_run", na.rm = TRUE)
+    ) / n()
+    ) |>
+    filter(balls_in_play > 150) |>
+    ungroup()
+
+  ui <- fluidPage(
+    titlePanel("Quality of Batted Balls by Player"),
+    plotlyOutput("scatterPlot")
+  )
+
+  server <- function(input, output) {
+    output$scatterPlot <- renderPlotly({
+      plot_ly(
+        data = mlb_summary,
+        x = ~bip_hit_pct,
+        y = ~bip_value,
+        type = 'scatter',
+        mode = 'markers',
+        color = ~avg_launch_speed,                 # color scale based on home runs
+        colors = "viridis",
+        text = ~paste0(
+          batter_name, "<br>",
+          "Avg Hit Value: ", round(bip_value, 3), "<br>",
+          "BA on Batted Balls: ", round(bip_hit_pct, 3), "<br>",
+          "Avg EV: ", round(avg_launch_speed, 3), " mph"
+        ),
+        hoverinfo = 'text',
+        marker = list(size = 10, opacity = 0.75)
+      ) %>%
+        layout(
+          xaxis = list(title = "Batting Average on Batted Balls"),
+          yaxis = list(title = "Value of Hits"),
+          colorbar = list(title = "Average Exit Velocity (mph)")
+        )
+    })
+  }
+
+  
+  shinyApp(ui = ui, server = server)
+
+  
+  
+  
+  
