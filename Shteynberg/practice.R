@@ -11,8 +11,19 @@ mlb <- mlb |>
 
 #boxplot of launch_speed by events
 #how hard batter hits to achieve different outcomes
-mlb |> ggplot(aes(x=events,y=launch_speed))+
-  geom_boxplot(fill="skyblue")+
+mlb |> 
+  mutate(event_group = case_when(
+    events == "single" ~ "Single",
+    events == "double" ~ "Double",
+    events == "triple" ~ "Triple",
+    events == "home_run" ~ "Home Run",
+    events %in% c("field_out", "fielders_choice", "fielders_choice_out", "force_out", "sac_bunt", "sac_fly") ~ "1 Out",
+    events %in% c("grounded_into_double_play", "sac_fly_double_play", "triple_play", "double_play") ~ "2+ Outs",
+    events %in% c("field_error") ~ "Error"
+  )) |>
+  mutate(event_group= factor(event_group,levels=c("2+ Outs", "1 Out", "Error", "Single", "Double", "Triple", "Home Run"))) |> 
+  ggplot(aes(x=event_group,y=launch_speed))+
+  geom_boxplot(fill="steelblue")+
   labs(title="Launch Speed by Event", x="Event", y="Launch Speed (mph)")+
   theme_minimal()+
   coord_flip() #cuz names overlap on the bottom of plot otherwise
@@ -204,13 +215,15 @@ mlb |>
 #Hypothesis: HR and flyers might require longer swings. Ground balls might not.
 library(ggridges)
 mlb |> 
-  filter(!is.na(swing_length), !is.na(events)) |> 
-  ggplot(aes(x=swing_length, y=events, fill=events))+
+  filter(!is.na(launch_angle), !is.na(events)) |> 
+  ggplot(aes(x=launch_angle, y=events, fill=events))+
   geom_density_ridges(alpha=0.6)+
   theme_minimal()+
-  labs(title="Swing Length Distribution by Batted Ball Outcome",
-       x="Swing Length (ft)", y="Event")+
+  labs(title="lan angle Distribution by Batted Ball Outcome",
+       x="lan angle", y="Event")+
   theme(legend.position = "none")
+
+cor(mlb$launch_speed, mlb$release_speed, use="complete.obs")
 
 #1B: K-means clustering? swing profiles? bat speed vs swing length scatterplot with clusters
 #archetypes of hitters - short compact swings vs long power swings.
@@ -253,3 +266,118 @@ mlb |>
   theme(panel.grid = element_blank(),
         plot.title = element_text(size = 16, face = "bold", hjust = 0.5))
 
+mlb |> 
+  filter(events=="double") |> 
+  group_by(batter_name) |> 
+  count()
+
+
+?reorder_within()
+#top batters by event type (hits only)
+library(tidytext)
+mlb |> 
+  filter(events%in% c("double", "single", "triple", "home_run")) |> 
+  count(batter_name, events, sort=TRUE) |> 
+  group_by(events) |> 
+  slice_max(n, n=5) |> 
+  ggplot(aes(x=reorder_within(batter_name, n, events), y=n, fill=events))+
+  geom_col(show.legend=FALSE)+
+  facet_wrap(~events, scales ="free")+
+  coord_flip()+
+  scale_x_reordered()+
+  scale_y_continuous(expand=c(0,0))+
+  labs(title="Top 5 Batters by Event Type", x="Batter", y="Count")+
+  theme_minimal()
+
+#average launch speed by batter
+mlb |> 
+  group_by(batter_name) |> 
+  summarize(avg_speed=mean(launch_speed)) |> 
+  slice_max(avg_speed, n=10) |> 
+  ggplot(aes(x=reorder(batter_name, avg_speed), y=avg_speed))+
+  geom_col(fill="red")+
+  coord_flip()+
+  labs(title="Top 10 Batters by Avg Launch Speed", x="Batter", y="Avg Launch Speed (mph)")+
+  theme_minimal()
+
+#spray chart for a player
+mlb |> 
+  filter(batter_name=="Ohtani, Shohei") |> 
+  ggplot(aes(x=hit_coord_x, y=-hit_coord_y, color=events))+
+  geom_point(alpha=0.7)+
+  coord_fixed()+
+  theme_minimal()+
+  labs(title="Spray Chart: Shohei Ohtani", x="Horizontal Field Location", y="Vertical Field Location")
+
+
+#Most common pitch types thrown in the dataset
+mlb |> 
+  count(pitch_name, sort=TRUE) |> 
+  slice_max(n, n=10) |> 
+  ggplot(aes(x=reorder(pitch_name, n),y=n))+
+  geom_col(fill="red")+
+  coord_flip()+
+  labs(title="Top 10 Most Common Pitch Types", x="Pitch Type", y="Count")+
+  theme_minimal()
+
+
+#bar plot of batted ball outcomes
+mlb |> 
+  count(events) |> 
+  mutate(events=reorder(events, n)) |> 
+  ggplot(aes(x=events, y=log(n)))+
+  geom_col(fill="red")+
+  coord_flip()+
+  labs(title="Distribution of Batted Ball Outcomes", x="Outcome", y="Log Count")+
+  theme_minimal()
+
+#strike zone heatmap
+#where in the strike zone are balls hit most often
+mlb |> 
+  filter(!is.na(plate_x), !is.na(plate_z)) |> 
+  ggplot(aes(x=plate_x, y=plate_z))+
+  stat_bin2d(bins=30)+
+  scale_fill_viridis_c()+
+  theme_minimal()
+
+#most frequent batters bar chart
+#which appear most in this dataset
+mlb |> 
+  count(batter_name, sort=TRUE) |> 
+  slice_max(n,n=10) |> 
+  ggplot(aes(x=reorder(batter_name, n), y=n))+
+  geom_col(fill="steelblue")+
+  coord_flip()+labs(title="Top 10 Most Frequent Batters",
+                    x="Batter",
+                    y="Number of Appearances")+
+  theme_minimal()
+
+#outcome proportions by pitch type
+#how do outcomes vary by pitch type
+#are certain pitches more likely to lead to good or bad outcomes?
+library(viridis)
+mlb |> 
+  filter(!is.na(pitch_name), !is.na(events)) |> 
+  count(pitch_name, events) |> 
+  group_by(pitch_name) |> 
+  mutate(prop=n/sum(n)) |> 
+  ggplot(aes(x=pitch_name, y=prop, fill=events))+
+  geom_col()+
+  coord_flip()+
+  theme_minimal()+
+  scale_fill_viridis(discrete = TRUE)
+
+#when are hits hardest or farthest?
+mlb |> 
+  group_by(inning) |> 
+  summarize(avg_exit_velocity=mean(launch_speed, na.rm=TRUE)) |> 
+  ggplot(aes(x=factor(inning), y=avg_exit_velocity))+
+  geom_col(fill="steelblue")+
+  theme_minimal()+
+  labs(title = "Average Exit Velocity by Inning",
+       x = "Inning",
+       y = "Avg Exit Velocity (mph)") 
+
+install.packages("sportyR")
+library(sportyR)
+geom_baseball(league = "MLB")
