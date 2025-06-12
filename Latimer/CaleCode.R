@@ -27,8 +27,11 @@ mlb_batted_balls |>
 mlb_batted_balls |>
   filter(!is.na(events), !is.na(if_fielding_alignment)) |>
   mutate(event_group = case_when(
-    events %in% c("single", "double", "triple", "home_run", "sac_bunt", "sac_fly") ~ "Offensive Success",
-    events %in% c("field_out", "fielders_choice", "fielders_choice_out", "force_out") ~ "1 Out",
+    events == "single" ~ "Single",
+    events == "double" ~ "Double",
+    events == "triple" ~ "Triple",
+    events == "home_run" ~ "Home Run",
+    events %in% c("field_out", "fielders_choice", "fielders_choice_out", "force_out", "sac_bunt", "sac_fly") ~ "1 Out",
     events %in% c("grounded_into_double_play", "sac_fly_double_play", "triple_play", "double_play") ~ "2+ Outs",
     events %in% c("field_error") ~ "Error"
   )) |>
@@ -77,11 +80,21 @@ cor(mlb_batted_balls$release_speed,
     mlb_batted_balls$effective_speed, 
     use = "complete.obs")
 
-mlb_batted_balls |>
-  filter(!is.na(hit_coord_x), !is.na(hit_coord_y), !is.na(events), batter_name == "Devers, Rafael") |>
-  group_by(events) |>
-  ggplot(aes(x = hit_coord_x, y = -1 *hit_coord_y)) +
-  geom_point(aes(color = events, alpha=0.001))
+
+# Spray Chart
+# install.packages("ggbaseball")
+library(sportyR)
+
+mlb_batted_balls_filtered <- mlb_batted_balls |>
+  filter(!is.na(hit_coord_x), !is.na(hit_coord_y), !is.na(events)) |>
+  mutate(location_x = 2.5 * (hit_coord_x - 125.42),
+         location_y = 2.5 * (198.27 - hit_coord_y),
+         distance = sqrt(location_x ** 2 + location_y ** 2)) |>
+  filter(location_x > 0, batter_name == "Witt Jr., Bobby")
+
+geom_baseball(league = "MLB") +
+  geom_point(data = mlb_batted_balls_filtered, aes(location_x, location_y, color = events, alpha = 0.1))
+  
 
 mlb_batted_balls |>
   filter(!is.na(balls), !is.na(strikes), events == "home_run") |>
@@ -94,8 +107,11 @@ mlb_batted_balls |>
 library(dplyr)
 library(ggplot2)
 library(RColorBrewer)
+library(viridis)
 
-mlb_batted_balls |>
+# Proportion of Outcomes by Pitch Bar Chart
+
+count_prop <- mlb_batted_balls |>
   filter(!is.na(balls), !is.na(strikes), !is.na(events), events != "field_error") |>
   mutate(counts = paste0(balls, "-", strikes)) |>
   mutate(event_group = case_when(
@@ -107,10 +123,19 @@ mlb_batted_balls |>
     events %in% c("grounded_into_double_play", "sac_fly_double_play", "triple_play", "double_play") ~ "2+ Outs",
     events %in% c("field_error") ~ "Error"
   )) |>
+  mutate(event_group = factor(event_group, levels = c("2+ Outs", "1 Out", "Error", "Home Run", "Triple", "Double", "Single"))) |>
+  mutate(counts = forcats::fct_rev(factor(counts))) |>
   count(counts, event_group) |>
   ggplot(aes(x = counts, y = n, fill = event_group)) +
   geom_col(position = "fill") +
-  ggthemes::scale_fill_colorblind()
+  labs(y = "Proportion of Outcomes", x = "Counts (Balls-Strikes)", title = "Proportion of Outcomes in Certain Counts", fill = "Outcome Type") +
+  coord_flip() +
+  scale_fill_viridis(discrete = TRUE) +
+  theme_minimal()
+
+count_prop
+ggsave("Count_prop.png", plot = count_prop, width = 8, height = 6, dpi = 300)
+
 
 mlb_batted_balls |>
   filter(!is.na(pitch_number), !is.na(events)) |>
@@ -223,11 +248,11 @@ server <- function(input, output) {
   output$scatterPlot <- renderPlotly({
     plot_ly(
       data = mlb_summary2,
-      y = ~hr_rate,
-      x = ~bip_hit_pct,
+      y = ~bip_value,
+      x = ~avg_swing_len,
       type = 'scatter',
       mode = 'markers',
-      color = ~avg_bat_speed,                 # color scale based on home runs
+      color = ~avg_launch_speed,                 # color scale based on home runs
       colors = "viridis",
       text = ~paste0(
         batter_name, "<br>",
@@ -240,7 +265,7 @@ server <- function(input, output) {
     ) %>%
       layout(
         xaxis = list(title = "Average Swing Length"),
-        yaxis = list(title = "Solid Hit %"),
+        yaxis = list(title = "BiP Value"),
         colorbar = list(title = "Average Exit Velocity (mph)")
       )
   })
@@ -274,7 +299,7 @@ pca_scores <- as.data.frame(pca_result$x) |>
   mutate(batter_name = mlb_features$batter_name)
 
 pca_scores$PC2 <- -pca_scores$PC2
-  
+pca_scores$PC1 <- -pca_scores$PC1
   
 set.seed(42)
 k_result <- kmeans(select(pca_scores, PC1, PC2), centers = 3, nstart = 25)
