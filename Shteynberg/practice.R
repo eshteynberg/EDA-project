@@ -378,6 +378,57 @@ mlb |>
        x = "Inning",
        y = "Avg Exit Velocity (mph)") 
 
-install.packages("sportyR")
 library(sportyR)
-geom_baseball(league = "MLB")
+mlb |> 
+  mutate(location_x = 2.5*(hit_coord_x - 125.42),
+         location_y = 2.5*(198.27 - hit_coord_y)) |> 
+  geom_baseball(league = "MLB")+
+  geom_point(aes(locaton_x, location_y))
+
+
+#KMEANS CLUSTERING
+set.seed(42)
+mlb_features <- mlb |>
+  group_by(batter_name) |> 
+  summarize(
+    avg_launch_speed=mean(launch_speed, na.rm=TRUE),
+    avg_launch_angle=mean(launch_angle, na.rm=TRUE),
+    avg_bat_speed=mean(bat_speed, na.rm=TRUE),
+    balls_in_play=n()
+  ) |> 
+  filter(balls_in_play>=50) |> 
+  select(-balls_in_play) |> 
+  drop_na()
+
+std_mlb_features <-mlb_features |> 
+  select(-batter_name) |> 
+  scale()
+
+#default kmeans (Hartigan-Wong)
+kmeans_result<- std_mlb_features |> 
+  kmeans(centers=4, nstart=100)
+
+mlb_clusters <- data.frame(
+  batter_name = mlb_features$batter_name,
+  cluster=kmeans_result$cluster
+)
+
+
+
+
+#to visualize results with many dimensions (features), do PCA and plot
+#plot top 2 dimensions (capture most of the variation in the data)
+library(factoextra)
+
+kmeans_result |> 
+  fviz_cluster(data=std_mlb_features,
+               geom="point",
+               ellipse=FALSE)+
+  ggthemes::scale_color_colorblind()+
+  theme_minimal()
+
+pca_result <- prcomp(std_mlb_features, center=TRUE, scale.=TRUE)
+summary(pca_result)
+pca_result$rotation
+
+
