@@ -187,7 +187,7 @@ mlb_batted_balls |>
     TRUE ~ "No Difference"
   )) |>
   ggplot(aes(x = bip_value_oppo, y = bip_value_same)) +
-  geom_point(aes(color = bip_advantage), alpha = 0.7) +
+  geom_point(aes(color = bip_advantage), alpha = 0.75) +
   scale_color_manual(values = c("red", "#117733", "#3399FF")) +
   geom_smooth(method = "lm", color = "black") +
   geom_abline(intercept = 0, slope = 1, linetype = "dashed", color = "black") +
@@ -221,7 +221,7 @@ mlb_batted_balls_filtered <- mlb_batted_balls |>
 
 geom_baseball(league = "MLB") +
   geom_point(data = mlb_batted_balls_filtered, aes(location_x, location_y, color = events, alpha = 0.1))
-  
+
 
 # mlb_batted_balls |>
 #   filter(!is.na(balls), !is.na(strikes), events == "home_run") |>
@@ -287,10 +287,10 @@ mlb_summary <- mlb_batted_balls |>
     line_drive_pct = sum(bb_type == "line_drive", na.rm = TRUE) / n() * 100,
     balls_in_play = n(),
     bip_hit_pct = (sum(events == "single", na.rm = TRUE) +
-      sum(events == "double", na.rm = TRUE) +
-      sum(events == "triple", na.rm = TRUE) +
-      sum(events == "home_run", na.rm = TRUE)
-  ) / n(),
+                     sum(events == "double", na.rm = TRUE) +
+                     sum(events == "triple", na.rm = TRUE) +
+                     sum(events == "home_run", na.rm = TRUE)
+    ) / n(),
     avg_launch_angle = mean(launch_angle, na.rm = TRUE)) |>
   filter(balls_in_play > 150) |>
   ungroup()
@@ -359,7 +359,7 @@ mlb_summary2 <- mlb_batted_balls |>
     solid_hit_pct = sum(launch_angle >= 15 & launch_angle <= 35 & launch_speed >= 90, na.rm = TRUE) / n() * 100,
     singles = sum(events == "single") / n(),
     avg_strike_zone = mean(strike_zone_top, na.rm = TRUE) - mean(strike_zone_bottom, na.rm = TRUE)
-    )|>
+  )|>
   filter(balls_in_play > 150) |>
   ungroup()
 
@@ -396,7 +396,7 @@ server <- function(input, output) {
 }
 
 shinyApp(ui = ui, server = server)
-  
+
 
 set.seed(42)
 
@@ -417,7 +417,7 @@ mlb_features <- mlb_batted_balls |>
   filter(balls_in_play >= 50) |>
   select(-balls_in_play) |>
   drop_na()
-  
+
 features_scaled <- mlb_features |>
   select(-batter_name) |>
   scale()
@@ -433,7 +433,7 @@ k_result |>
                ellipse = FALSE) +
   ggthemes::scale_color_colorblind() + 
   theme_light()
-  
+
 mlb_summary2_with_pca <- pca_scores |>
   left_join(mlb_features |> select(batter_name, avg_launch_speed, avg_launch_angle, avg_bat_speed), by = "batter_name")
 
@@ -452,7 +452,7 @@ mlb_summary2_with_pca |>
     color = "Cluster",
     title = "MLB Player Clusters Based on Batted Ball Profile"
   )
-  
+
 set.seed(42)
 mlb_features <- mlb_batted_balls |>
   group_by(batter_name) |> 
@@ -537,7 +537,7 @@ std_mlb_features_df |>
 
 
 
-  
+
 # ui <- fluidPage(
 #   titlePanel("Player Archetypes - PCA"),
 #   plotlyOutput("scatterPlot")
@@ -571,3 +571,4 @@ std_mlb_features_df |>
 # }
 # 
 # shinyApp(ui = ui, server = server)
+
