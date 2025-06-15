@@ -626,7 +626,7 @@ library(ggthemes)
 library(ggrepel)
 library(factoextra)
 
-# Step 1: Compute player-level features without bip_value for clustering
+# Step 1: Compute player-level features
 mlb_features <- mlb_batted_balls |>
   group_by(batter_name) |> 
   summarise(
@@ -646,69 +646,59 @@ mlb_features <- mlb_batted_balls |>
   filter(total_bip >= 50) |>
   drop_na()
 
-# Step 2: Select features for clustering (excluding bip_value or total_bases)
+# Step 2: Select and scale features
 features_for_clustering <- mlb_features |>
   select(avg_launch_speed, avg_launch_angle, avg_bat_speed)
 
-# Step 3: Standardize features
 std_features <- scale(features_for_clustering)
 
-# Step 4: Perform K-means clustering
+# Step 3: K-means clustering
 set.seed(42)
 kmeans_result <- kmeans(std_features, centers = 4, nstart = 100)
 
-# Step 5: Add cluster labels back to the mlb_features dataframe
+# Step 4: Flip clusters 2 and 3
+flipped_clusters <- case_when(
+  kmeans_result$cluster == 2 ~ 3,
+  kmeans_result$cluster == 3 ~ 2,
+  TRUE ~ kmeans_result$cluster
+)
+
+# Step 5: Add cluster assignments back
 clustered_df <- mlb_features |>
-  mutate(cluster = kmeans_result$cluster)
+  mutate(cluster = flipped_clusters)
 
-# Optional: Rename clusters if you want
-clustered_df <- clustered_df |>
-  mutate(
-    cluster_label = case_when(
-      cluster == 1 ~ "Bad",
-      cluster == 2 ~ "Line Drive",
-      cluster == 3 ~ "Average",
-      cluster == 4 ~ "Elite",
-      TRUE ~ as.character(cluster)
-    )
-  )
-
-# Step 6: Compute cluster-level BIP value: sum total_bases / sum total_bip for each cluster
+# Step 6: Cluster-level BIP value (total bases / total BIP)
 cluster_summary <- clustered_df |>
-  group_by(cluster, cluster_label) |>
+  group_by(cluster) |>
   summarise(
-    cluster_total_bases = sum(total_bases, na.rm = TRUE),
-    cluster_total_bip = sum(total_bip, na.rm = TRUE),
+    cluster_total_bases = sum(total_bases),
+    cluster_total_bip = sum(total_bip),
     cluster_bip_value = cluster_total_bases / cluster_total_bip,
     player_count = n(),
     .groups = "drop"
   )
 
-# Step 7: Plot cluster BIP values
-ggplot(cluster_summary, aes(x = reorder(cluster_label, cluster_bip_value), y = cluster_bip_value, fill = cluster_label)) +
-  geom_col(show.legend = FALSE) +
+# Step 7: Bar plot of cluster-level BIP value
+ggplot(cluster_summary, aes(x = factor(cluster), y = cluster_bip_value, fill = factor(cluster))) +
+  geom_col() +
   geom_text(aes(label = round(cluster_bip_value, 2)), vjust = -0.5, size = 5) +
   labs(
-    title = "Average BIP Value by Cluster (Total Bases / Total BIP)",
+    title = "Cluster-Level BIP Value (Total Bases / Total BIP)",
     x = "Cluster",
-    y = "Cluster-Level BIP Value"
+    y = "BIP Value",
+    fill = "Cluster"
   ) +
   scale_fill_brewer(palette = "Set2") +
   theme_minimal()
 
-# Optional: Visualize clusters with PCA and scatterplot
-
-fviz_cluster(kmeans_result, data = std_features, geom = "point", ellipse = TRUE) +
+# Step 8: Cluster visualization with PCA
+fviz_cluster(list(data = std_features, cluster = flipped_clusters),
+             geom = "point", ellipse = TRUE) +
   ggthemes::scale_color_colorblind() +
   theme_minimal() +
   labs(title = "K-Means Clusters on Standardized Batted Ball Features")
 
-# PCA for visualizing variance
-pca_result <- prcomp(std_features, center = TRUE, scale. = TRUE)
-summary(pca_result)
-
-# Scatter plot with player clusters
-library(ggrepel)
+# Step 9: Scatter plot of avg launch speed vs angle, with clusters
 clustered_df |>
   mutate(
     player_cluster = as.factor(cluster),
@@ -724,7 +714,7 @@ clustered_df |>
     x = "Average Launch Speed",
     y = "Average Launch Angle",
     color = "Cluster",
-    title = "MLB Player Clusters Based on Batted Ball Profile"
+    title = "MLB Player Clusters Based on Batted Ball Profile (2 and 3 Flipped)"
   )
 
 
