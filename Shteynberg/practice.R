@@ -60,7 +60,28 @@ mlb |>
         legend.title=element_text(size=12),
         legend.text=element_text(size=10))
 
-  
+
+#similar but hexbin
+#mutate() to create indicator function for hits
+#x and y axis are divided into 40 bins (each) for launch speed and launch angle
+#for each hexbin (combo) of launch speed and angle, summarizes is_hit using mean (effectively proportion of hits inside that bin)
+
+mlb |> 
+  mutate(is_hit = ifelse(events %in% c("single", "double", "triple", "home_run"), 1, 0)) |> 
+  ggplot(aes(x = launch_speed, y = launch_angle)) +
+  stat_summary_hex(
+    aes(z = is_hit), 
+    fun = mean, 
+    bins = 40
+  ) +
+  scale_fill_viridis_c(option="C", name = "Hit Rate", limits = c(0, 1)) +
+  labs(
+    title = "Hit Rate by Launch Speed & Angle",
+    x = "Launch Speed (mph)", y = "Launch Angle (°)"
+  ) +
+  theme_minimal()
+
+
 #####
 #scatterplot of bat_speed vs swing_length (color by bb_type)
 mlb |> 
@@ -110,7 +131,7 @@ mlb |>
   theme(axis.text.x=element_text(angle=45, hjust=1),
         legend.position="none",
         plot.title=element_text(size=14, face="bold", hjust=0.5))
-  
+
 #Violin plot
 #launch angle by pitcher handedness
 #compare dists of launch angle between
@@ -219,7 +240,7 @@ mlb |>
   ggplot(aes(x=launch_angle, y=events, fill=events))+
   geom_density_ridges(alpha=0.6)+
   theme_minimal()+
-  labs(title="lan angle Distribution by Batted Ball Outcome",
+  labs(title="launch angle Distribution by Batted Ball Outcome",
        x="lan angle", y="Event")+
   theme(legend.position = "none")
 
@@ -385,7 +406,7 @@ mlb |>
   geom_baseball(league = "MLB")+
   geom_point(aes(locaton_x, location_y))
 
-
+####################################
 #KMEANS CLUSTERING
 set.seed(42)
 mlb_features <- mlb |>
@@ -408,12 +429,6 @@ std_mlb_features <-mlb_features |>
 kmeans_result<- std_mlb_features |> 
   kmeans(centers=4, nstart=100)
 
-mlb_clusters <- data.frame(
-  batter_name = mlb_features$batter_name,
-  cluster=kmeans_result$cluster
-)
-
-
 
 
 #to visualize results with many dimensions (features), do PCA and plot
@@ -423,12 +438,114 @@ library(factoextra)
 kmeans_result |> 
   fviz_cluster(data=std_mlb_features,
                geom="point",
-               ellipse=FALSE)+
+               ellipse=TRUE)+
   ggthemes::scale_color_colorblind()+
   theme_minimal()
 
 pca_result <- prcomp(std_mlb_features, center=TRUE, scale.=TRUE)
 summary(pca_result)
 pca_result$rotation
+
+
+#elbow plot
+library(factoextra)
+std_mlb_features |> 
+  fviz_nbclust(kmeans, method = "wss")
+
+clustered_batters <- data.frame(
+  batter_name = mlb_features$batter_name,
+  cluster=kmeans_result$cluster
+)
+
+mlb_features_clustered <- mlb |> 
+  left_join(clustered_batters, by="batter_name") |> 
+  filter(!is.na(cluster))
+
+
+#avg bip value per cluster
+mlb_features_clustered |> 
+  group_by(cluster) |> 
+  summarize(
+    total_bip_value = sum(case_when(
+      events == "single" ~ 1,
+      events == "double" ~ 2,
+      events == "triple" ~ 3,
+      events == "home_run" ~ 4,
+      TRUE ~ 0
+    ), na.rm = TRUE),
+    total_batted_balls = n(),  
+    avg_bip_value = total_bip_value / total_batted_balls
+  )
+
+
+#Avg launch speed per cluster
+mlb_features_clustered_subset <- mlb_features |> 
+  left_join(clustered_batters, by="batter_name") |> 
+  filter(!is.na(cluster))
+
+mlb_features_clustered_subset |> 
+  ggplot(aes(x=avg_launch_speed, y=avg_launch_angle, color=factor(cluster)))+
+  geom_point(alpha=0.8)+
+  ggthemes::scale_color_colorblind()+
+  theme_minimal()
+
+mlb_features_clustered_subset |> 
+  group_by(cluster) |> 
+  summarize(
+    avg_launch_speed = mean(avg_launch_speed),
+    avg_launch_angle = mean(avg_launch_angle),
+    avg_bat_speed = mean(avg_bat_speed),
+    number_of_batters = n()
+  )
+
+
+cluster_hits <- mlb_features_clustered |> 
+  filter(events %in% c("single", "double", "triple", "home_run")) |> 
+  group_by(cluster, events) |> 
+  summarize(count = n(), .groups = "drop") 
+
+cluster_hits |> 
+  pivot_wider(
+    names_from = events, 
+    values_from = count, 
+    values_fill = 0
+  ) |> 
+  select(cluster, single, double, triple, home_run)
+
+
+cluster_hits |> 
+  mutate(events = factor(events, levels = c("single", "double", "triple", "home_run"))) |> 
+  ggplot(aes(x = factor(cluster), y = count, fill = events)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(x = "Cluster", y = "Count", fill = "Event", title = "Hit Types by Cluster") +
+  theme_minimal()
+
+#Launch Speed
+mlb_features_clustered_subset |>
+  group_by(cluster) |>
+  summarize(avg = mean(avg_launch_speed)) |>
+  ggplot(aes(x = factor(cluster), y = avg)) +
+  geom_col(fill = "red") +
+  labs(title = "Avg Launch Speed by Cluster", x = "Cluster", y = "mph") +
+  theme_minimal()
+
+#launch Angle
+mlb_features_clustered_subset |>
+  group_by(cluster) |>
+  summarize(avg = mean(avg_launch_angle)) |>
+  ggplot(aes(x = factor(cluster), y = avg)) +
+  geom_col(fill = "blue") +
+  labs(title = "Avg Launch Angle by Cluster", x = "Cluster", y = "Degrees") +
+  theme_minimal()
+
+#bat Speed
+mlb_features_clustered_subset |>
+  group_by(cluster) |>
+  summarize(avg = mean(avg_bat_speed)) |>
+  ggplot(aes(x = factor(cluster), y = avg)) +
+  geom_col(fill = "darkgreen") +
+  labs(title = "Avg Bat Speed by Cluster", x = "Cluster", y = "mph") +
+  theme_minimal()
+
 
 
