@@ -453,49 +453,289 @@ mlb_summary2_with_pca |>
     title = "MLB Player Clusters Based on Batted Ball Profile"
   )
 
-set.seed(42)
-mlb_features <- mlb_batted_balls |>
-  group_by(batter_name) |> 
-  summarize(
-    bip_value = (
-      sum(events == "single", na.rm = TRUE) * 1 +
-        sum(events == "double", na.rm = TRUE) * 2 +
-        sum(events == "triple", na.rm = TRUE) * 3 +
-        sum(events == "home_run", na.rm = TRUE) * 4
-    ) / n(),
-    avg_launch_speed=mean(launch_speed, na.rm=TRUE),
-    avg_launch_angle=mean(launch_angle, na.rm=TRUE),
-    avg_bat_speed=mean(bat_speed, na.rm=TRUE),
-    balls_in_play=n()
-  ) |>
-  filter(balls_in_play>=50) |> 
-  select(-balls_in_play) |> 
-  drop_na()
-
-std_mlb_features <-mlb_features |> 
-  select(-batter_name) |> 
-  scale()
-
-#default kmeans (Hartigan-Wong)
-kmeans_result<- std_mlb_features |> 
-  kmeans(centers=3, nstart=100)
-
-mlb_clusters <- data.frame(
-  batter_name = mlb_features$batter_name,
-  cluster=kmeans_result$cluster
-)
-
-
-
+# set.seed(42)
+# mlb_features <- mlb_batted_balls |>
+#   group_by(batter_name) |> 
+#   summarise(
+#     bip_value = (
+#       sum(events == "single", na.rm = TRUE) * 1 +
+#         sum(events == "double", na.rm = TRUE) * 2 +
+#         sum(events == "triple", na.rm = TRUE) * 3 +
+#         sum(events == "home_run", na.rm = TRUE) * 4
+#     ) / n(),
+#     avg_launch_speed = mean(launch_speed, na.rm = TRUE),
+#     avg_launch_angle = mean(launch_angle, na.rm = TRUE),
+#     avg_bat_speed = mean(bat_speed, na.rm = TRUE),
+#     balls_in_play = n()
+#   ) |>
+#   filter(balls_in_play >= 50) |>
+#   drop_na()
+# 
+# # Remove bip_value from clustering features
+# features_for_clustering <- mlb_features |>
+#   select(avg_launch_speed, avg_launch_angle, avg_bat_speed)
+# 
+# # Standardize
+# std_features <- scale(features_for_clustering)
+# 
+# 
+# set.seed(42)
+# kmeans_result <- kmeans(std_features, centers = 4, nstart = 100)
+# 
+# mlb_clusters <- mlb_features |>
+#   select(batter_name, bip_value) |>
+#   mutate(cluster = kmeans_result$cluster)
+# 
+# library(ggplot2)
+# 
+# mlb_clusters |>
+#   group_by(cluster) |>
+#   summarise(
+#     avg_bip_value = mean(bip_value, na.rm = TRUE),
+#     count = n()
+#   ) |>
+#   ggplot(aes(x = factor(cluster), y = avg_bip_value, fill = factor(cluster))) +
+#   geom_col() +
+#   geom_text(aes(label = round(avg_bip_value, 2)), vjust = -0.5) +
+#   scale_fill_brewer(palette = "Set2", name = "Cluster") +
+#   labs(
+#     title = "Average BIP Value by Player Cluster",
+#     x = "Cluster",
+#     y = "Average BIP Value"
+#   ) +
+#   theme_minimal()
+# 
 
 #to visualize results with many dimensions (features), do PCA and plot
 #plot top 2 dimensions (capture most of the variation in the data)
+# library(factoextra)
+# 
+# 
+# # Summarize player stats
+# mlb_features <- mlb_batted_balls |>
+#   group_by(batter_name) |> 
+#   summarise(
+#     bip_value = (
+#       sum(events == "single", na.rm = TRUE) * 1 +
+#         sum(events == "double", na.rm = TRUE) * 2 +
+#         sum(events == "triple", na.rm = TRUE) * 3 +
+#         sum(events == "home_run", na.rm = TRUE) * 4
+#     ) / n(),
+#     avg_launch_speed = mean(launch_speed, na.rm = TRUE),
+#     avg_launch_angle = mean(launch_angle, na.rm = TRUE),
+#     avg_bat_speed = mean(bat_speed, na.rm = TRUE),
+#     balls_in_play = n(),
+#     .groups = "drop"
+#   ) |>
+#   filter(balls_in_play >= 50) |> 
+#   select(-balls_in_play) |> 
+#   drop_na()
+# 
+# # Select features for clustering (excluding bip_value)
+# features_for_clustering <- mlb_features |>
+#   select(avg_launch_speed, avg_launch_angle, avg_bat_speed)
+# 
+# # Standardize
+# std_features <- scale(features_for_clustering)
+# 
+# # Perform K-means
+# set.seed(42)
+# kmeans_result <- kmeans(std_features, centers = 4, nstart = 100)
+# 
+# # --- Flip clusters 2 and 3 ---
+# switched_clusters <- case_when(
+#   kmeans_result$cluster == 2 ~ 99,
+#   kmeans_result$cluster == 3 ~ 2,
+#   TRUE ~ kmeans_result$cluster
+# )
+# switched_clusters <- ifelse(switched_clusters == 99, 3, switched_clusters)
+# 
+# # Add switched cluster back to the full player dataframe
+# clustered_df <- mlb_features |>
+#   mutate(cluster = switched_clusters)
+# 
+# # Optional: Assign readable labels
+# clustered_df <- clustered_df |>
+#   mutate(
+#     cluster_label = case_when(
+#       cluster == 1 ~ "Bad",
+#       cluster == 2 ~ "Average",     # previously cluster 3
+#       cluster == 3 ~ "Line Drive",  # previously cluster 2
+#       cluster == 4 ~ "Elite"
+#     )
+#   )
+# 
+# library(factoextra)
+# 
+# # Create a copy of the original kmeans result and overwrite the clusters
+# kmeans_result_swapped <- kmeans_result
+# kmeans_result_swapped$cluster <- clustered_df$cluster
+# 
+# # Now pass this modified object into fviz_cluster
+# fviz_cluster(
+#   kmeans_result_swapped,
+#   data = std_features,
+#   geom = "point",
+#   ellipse = TRUE
+# ) +
+#   ggthemes::scale_color_colorblind() +
+#   theme_minimal() +
+#   labs(title = "K-Means Clusters with Cluster 2 and 3 Swapped")
+# 
+# library(ggrepel)
+# 
+# clustered_df |>
+#   mutate(
+#     player_cluster = as.factor(cluster),
+#     label_player = ifelse(avg_launch_angle < -10 & avg_launch_speed < 85, batter_name, NA)
+#   ) |>
+#   ggplot(aes(x = avg_launch_speed, y = avg_launch_angle, color = player_cluster)) +
+#   geom_point(size = 2, alpha = 0.8) +
+#   geom_text_repel(aes(label = label_player), size = 3, max.overlaps = 15) +
+#   ggthemes::scale_color_colorblind() +
+#   theme_minimal() +
+#   theme(legend.position = "bottom") +
+#   labs(
+#     x = "Average Launch Speed",
+#     y = "Average Launch Angle",
+#     color = "Cluster",
+#     title = "MLB Player Clusters Based on Batted Ball Profile"
+#   )
+# 
+# clustered_df |>
+#   group_by(cluster) |>
+#   summarise(
+#     avg_bip_value = mean(bip_value, na.rm = TRUE),
+#     count = n()
+#   ) |>
+#   ggplot(aes(x = factor(cluster), y = avg_bip_value, fill = factor(cluster))) +
+#   geom_col() +
+#   geom_text(aes(label = round(avg_bip_value, 2)), vjust = -0.5) +
+#   scale_fill_brewer(palette = "Set2", name = "Cluster") +
+#   labs(
+#     title = "Average BIP Value by Player Cluster",
+#     x = "Cluster",
+#     y = "Average BIP Value"
+#   ) +
+#   theme_minimal()
+
+
+library(dplyr)
+library(ggplot2)
+library(ggthemes)
+library(ggrepel)
 library(factoextra)
+
+# Step 1: Compute player-level features without bip_value for clustering
+mlb_features <- mlb_batted_balls |>
+  group_by(batter_name) |> 
+  summarise(
+    total_bases = sum(
+      (events == "single") * 1 +
+        (events == "double") * 2 +
+        (events == "triple") * 3 +
+        (events == "home_run") * 4,
+      na.rm = TRUE
+    ),
+    total_bip = n(),
+    avg_launch_speed = mean(launch_speed, na.rm = TRUE),
+    avg_launch_angle = mean(launch_angle, na.rm = TRUE),
+    avg_bat_speed = mean(bat_speed, na.rm = TRUE),
+    .groups = "drop"
+  ) |>
+  filter(total_bip >= 50) |>
+  drop_na()
+
+# Step 2: Select features for clustering (excluding bip_value or total_bases)
+features_for_clustering <- mlb_features |>
+  select(avg_launch_speed, avg_launch_angle, avg_bat_speed)
+
+# Step 3: Standardize features
+std_features <- scale(features_for_clustering)
+
+# Step 4: Perform K-means clustering
+set.seed(42)
+kmeans_result <- kmeans(std_features, centers = 4, nstart = 100)
+
+# Step 5: Add cluster labels back to the mlb_features dataframe
+clustered_df <- mlb_features |>
+  mutate(cluster = kmeans_result$cluster)
+
+# Optional: Rename clusters if you want
+clustered_df <- clustered_df |>
+  mutate(
+    cluster_label = case_when(
+      cluster == 1 ~ "Bad",
+      cluster == 2 ~ "Line Drive",
+      cluster == 3 ~ "Average",
+      cluster == 4 ~ "Elite",
+      TRUE ~ as.character(cluster)
+    )
+  )
+
+# Step 6: Compute cluster-level BIP value: sum total_bases / sum total_bip for each cluster
+cluster_summary <- clustered_df |>
+  group_by(cluster, cluster_label) |>
+  summarise(
+    cluster_total_bases = sum(total_bases, na.rm = TRUE),
+    cluster_total_bip = sum(total_bip, na.rm = TRUE),
+    cluster_bip_value = cluster_total_bases / cluster_total_bip,
+    player_count = n(),
+    .groups = "drop"
+  )
+
+# Step 7: Plot cluster BIP values
+ggplot(cluster_summary, aes(x = reorder(cluster_label, cluster_bip_value), y = cluster_bip_value, fill = cluster_label)) +
+  geom_col(show.legend = FALSE) +
+  geom_text(aes(label = round(cluster_bip_value, 2)), vjust = -0.5, size = 5) +
+  labs(
+    title = "Average BIP Value by Cluster (Total Bases / Total BIP)",
+    x = "Cluster",
+    y = "Cluster-Level BIP Value"
+  ) +
+  scale_fill_brewer(palette = "Set2") +
+  theme_minimal()
+
+# Optional: Visualize clusters with PCA and scatterplot
+
+fviz_cluster(kmeans_result, data = std_features, geom = "point", ellipse = TRUE) +
+  ggthemes::scale_color_colorblind() +
+  theme_minimal() +
+  labs(title = "K-Means Clusters on Standardized Batted Ball Features")
+
+# PCA for visualizing variance
+pca_result <- prcomp(std_features, center = TRUE, scale. = TRUE)
+summary(pca_result)
+
+# Scatter plot with player clusters
+library(ggrepel)
+clustered_df |>
+  mutate(
+    player_cluster = as.factor(cluster),
+    label_player = ifelse(avg_launch_angle < -10 & avg_launch_speed < 85, batter_name, NA)
+  ) |>
+  ggplot(aes(x = avg_launch_speed, y = avg_launch_angle, color = player_cluster)) +
+  geom_point(size = 2, alpha = 0.8) +
+  geom_text_repel(aes(label = label_player), size = 3, max.overlaps = 15) +
+  ggthemes::scale_color_colorblind() +
+  theme_minimal() +
+  theme(legend.position = "bottom") +
+  labs(
+    x = "Average Launch Speed",
+    y = "Average Launch Angle",
+    color = "Cluster",
+    title = "MLB Player Clusters Based on Batted Ball Profile"
+  )
+
+
+
+##
+
 
 kmeans_result |> 
   fviz_cluster(data=std_mlb_features,
                geom="point",
-               ellipse=FALSE)+
+               ellipse=TRUE)+
   ggthemes::scale_color_colorblind()+
   theme_minimal()
 
@@ -512,7 +752,7 @@ std_mlb_features_df <- as.data.frame(mlb_features) |>
 std_mlb_features_df |>
   mutate(
     player_cluster = as.factor(cluster),
-    label_player = ifelse(avg_launch_angle < 10 & avg_launch_speed < 85, batter_name, NA)
+    label_player = ifelse(avg_launch_angle < -10 & avg_launch_speed < 85, batter_name, NA)
   ) |>
   ggplot(aes(x = avg_launch_speed, y = avg_launch_angle, color = player_cluster)) +
   geom_point(size = 2, alpha = 0.8) +
