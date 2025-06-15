@@ -455,7 +455,8 @@ std_mlb_features |>
 clustered_batters <- data.frame(
   batter_name = mlb_features$batter_name,
   cluster=kmeans_result$cluster
-)
+) |> 
+
 
 mlb_features_clustered <- mlb |> 
   left_join(clustered_batters, by="batter_name") |> 
@@ -475,7 +476,13 @@ mlb_features_clustered |>
     ), na.rm = TRUE),
     total_batted_balls = n(),  
     avg_bip_value = total_bip_value / total_batted_balls
-  )
+  ) |> 
+  ggplot(aes(x=factor(cluster), y=avg_bip_value))+
+  geom_col(fill = "red") +
+  theme_minimal()
+  
+
+
 
 
 #Avg launch speed per cluster
