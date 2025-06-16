@@ -931,6 +931,8 @@ print(closest_batters %>%
 
 library(knitr)
 
+# Batters Closest to the Averages of Each Cluster (min. 50 Batted Balls)
+
 df <- data.frame(
   cluster = c(1,1,1,2,2,2,3,3,3,4,4,4),
   batter_name = c("Jankowski, Travis", "Sánchez, Angel", "Bruján, Vidal",
@@ -945,7 +947,7 @@ df <- data.frame(
   stringsAsFactors = FALSE
 )
 
-colnames(df) <- c("Cluster", "Name", "Launch Speed", "Launch Angle", "Bat Speed", "BIP Value", "Distance from Cluster Averages")
+colnames(df) <- c("Cluster", "Name", "Avg. Launch Speed", "Avg. Launch Angle", "Avg. Bat Speed", "BIP Value", "Distance from Cluster Averages")
 
 highlight_names <- c("Jankowski, Travis", "Palacios, Richie", "Canzone, Dominic", "Grichuk, Randal")
 
@@ -962,33 +964,3 @@ df |>
       rows = df$Name %in% highlight_names
     )
   )
-
-# Print the data frame nicely
-kable(df)
-
-library(knitr)
-
-kable(df, caption = "Batters Closest to the Averages of Each Cluster")
-
-library(gt)
-
-colnames(df) <- c("Cluster", "Name", "Launch Speed", "Launch Angle", "Bat Speed", "BIP Value", "Distance from Cluster Averages")
-
-df$batter_name <- as.character(df$batter_name)
-
-# Define batters to highlight
-highlight_names <- c("Realmuto, J.T.", "Turang, Brice", "McCarthy, Jake")
-
-
-gt(df) %>%
-  tab_header(
-    title = "Batters Closest to the Averages of Each Cluster"
-  ) |>
-  tab_style(
-    style = cell_fill(color = "lightgreen"),
-    locations = cells_body(
-      rows = batter_name %in% highlight_names
-    )
-  )
-
-
