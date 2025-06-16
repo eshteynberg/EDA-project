@@ -691,6 +691,64 @@ ggplot(cluster_summary, aes(x = factor(cluster), y = cluster_bip_value, fill = f
   scale_fill_brewer(palette = "Set2") +
   theme_minimal()
 
+# --- Cluster-Level Avg Launch Speed ---
+clustered_df |>
+  group_by(cluster) |>
+  summarise(
+    avg_launch_speed = mean(avg_launch_speed, na.rm = TRUE),
+    .groups = "drop"
+  ) |>
+  ggplot(aes(x = factor(cluster), y = avg_launch_speed, fill = factor(cluster))) +
+  geom_col() +
+  geom_text(aes(label = round(avg_launch_speed, 1)), vjust = -0.5, size = 5) +
+  labs(
+    title = "Average Launch Speed by Cluster",
+    x = "Cluster",
+    y = "Average Launch Speed (mph)",
+    fill = "Cluster"
+  ) +
+  scale_fill_brewer(palette = "Set2") +
+  theme_minimal()
+
+# --- Cluster-Level Avg Launch Angle ---
+clustered_df |>
+  group_by(cluster) |>
+  summarise(
+    avg_launch_angle = mean(avg_launch_angle, na.rm = TRUE),
+    .groups = "drop"
+  ) |>
+  ggplot(aes(x = factor(cluster), y = avg_launch_angle, fill = factor(cluster))) +
+  geom_col() +
+  geom_text(aes(label = round(avg_launch_angle, 1)), vjust = -0.5, size = 5) +
+  labs(
+    title = "Average Launch Angle by Cluster",
+    x = "Cluster",
+    y = "Average Launch Angle (degrees)",
+    fill = "Cluster"
+  ) +
+  scale_fill_brewer(palette = "Set2") +
+  theme_minimal()
+
+# --- Cluster-Level Avg Bat Speed ---
+clustered_df |>
+  group_by(cluster) |>
+  summarise(
+    avg_bat_speed = mean(avg_bat_speed, na.rm = TRUE),
+    .groups = "drop"
+  ) |>
+  ggplot(aes(x = factor(cluster), y = avg_bat_speed, fill = factor(cluster))) +
+  geom_col() +
+  geom_text(aes(label = round(avg_bat_speed, 1)), vjust = -0.5, size = 5) +
+  labs(
+    title = "Average Bat Speed by Cluster",
+    x = "Cluster",
+    y = "Average Bat Speed (mph)",
+    fill = "Cluster"
+  ) +
+  scale_fill_brewer(palette = "Set2") +
+  theme_minimal()
+
+
 # Step 8: Cluster visualization with PCA
 fviz_cluster(list(data = std_features, cluster = flipped_clusters),
              geom = "point", ellipse = TRUE) +
@@ -714,7 +772,7 @@ clustered_df |>
     x = "Average Launch Speed",
     y = "Average Launch Angle",
     color = "Cluster",
-    title = "MLB Player Clusters Based on Batted Ball Profile (2 and 3 Flipped)"
+    title = "MLB Player Clusters Based on Batted Ball Profile"
   )
 
 
@@ -742,7 +800,13 @@ std_mlb_features_df <- as.data.frame(mlb_features) |>
 std_mlb_features_df |>
   mutate(
     player_cluster = as.factor(cluster),
-    label_player = ifelse(avg_launch_angle < -10 & avg_launch_speed < 85, batter_name, NA)
+    label_player = ifelse(batter_name %in% c("Jankowski, Travis",
+                                             "Sánchez, Ali", "Bruján, Vidal",
+                                             "Palacios, Richie", "Gomes, Yan",
+                                             "Martini, Nick", "Canzone, Dominic",
+                                             "Diaz, Yainer", "Realmuto, J.T.", 
+                                             "Grichuk, Randal", "Langford, Wyatt",
+                                             "Rice, Ben"), batter_name, NA)
   ) |>
   ggplot(aes(x = avg_launch_speed, y = avg_launch_angle, color = player_cluster)) +
   geom_point(size = 2, alpha = 0.8) +
@@ -801,4 +865,130 @@ std_mlb_features_df |>
 # }
 # 
 # shinyApp(ui = ui, server = server)
+
+
+library(dplyr)
+library(purrr)
+
+# Function to compute batter averages including bip_value with 50+ batted balls filter
+get_batter_averages <- function(data, min_bip = 150) {
+  data %>%
+    group_by(batter_name) %>%
+    summarise(
+      total_bip = n(),
+      avg_speed = mean(launch_speed, na.rm = TRUE),
+      avg_angle = mean(launch_angle, na.rm = TRUE),
+      avg_bat = mean(bat_speed, na.rm = TRUE),
+      bip_value = sum(
+        (events == "single") * 1 +
+          (events == "double") * 2 +
+          (events == "triple") * 3 +
+          (events == "home_run") * 4,
+        na.rm = TRUE
+      ) / total_bip,
+      .groups = "drop"
+    ) %>%
+    filter(total_bip >= min_bip) %>%
+    drop_na()
+}
+
+# Function to find closest batters to your fixed cluster averages
+find_closest_batters_to_fixed_clusters <- function(data, cluster_averages, n = 3, min_bip = 50) {
+  batter_avgs <- get_batter_averages(data, min_bip)
+  
+  map_dfr(1:nrow(cluster_averages), function(i) {
+    cluster_vals <- cluster_averages[i, ]
+    
+    batter_avgs %>%
+      mutate(
+        distance = sqrt(
+          (avg_speed - cluster_vals$avg_speed)^2 +
+            (avg_angle - cluster_vals$avg_angle)^2 +
+            (avg_bat - cluster_vals$avg_bat)^2 +
+            (bip_value - cluster_vals$bip_value)^2
+        ),
+        cluster = cluster_vals$cluster
+      ) %>%
+      arrange(distance) %>%
+      slice_head(n = n)
+  })
+}
+
+# Example usage:
+cluster_averages <- tibble::tibble(
+  cluster = 1:4,
+  avg_speed = c(83, 86.3, 89.7, 89.8),
+  avg_angle = c(5.8, 14.3, 9.5, 17.8),
+  avg_bat = c(65.9, 68.7, 72.4, 72.9),
+  bip_value = c(.396, .47, .55, .61)
+)
+
+closest_batters <- find_closest_batters_to_fixed_clusters(mlb_batted_balls, cluster_averages, n = 3, min_bip = 50)
+
+# Print with distance included
+print(closest_batters %>% 
+        select(cluster, batter_name, avg_speed, avg_angle, avg_bat, bip_value, distance))
+
+library(knitr)
+
+df <- data.frame(
+  cluster = c(1,1,1,2,2,2,3,3,3,4,4,4),
+  batter_name = c("Jankowski, Travis", "Sánchez, Angel", "Bruján, Vidal",
+                  "Palacios, Richie", "Gomes, Yan", "Martini, Nick",
+                  "Canzone, Dominic", "Diaz, Yainer", "Realmuto, J.T.",
+                  "Grichuk, Randal", "Langford, Wyatt", "Rice, Ben"),
+  avg_speed = c(84.0, 81.9, 83.7, 86.1, 85.8, 86.8, 90.0, 90.1, 89.0, 90.6, 89.5, 90.0),
+  avg_angle = c(5.31, 5.04, 6.79, 14.5, 14.1, 14.3, 9.69, 8.95, 9.24, 17.4, 17.0, 17.7),
+  avg_bat = c(65.3, 66.2, 65.2, 68.5, 68.8, 69.0, 72.0, 72.5, 72.6, 73.3, 73.7, 71.7),
+  bip_value = c(0.280, 0.239, 0.411, 0.417, 0.423, 0.422, 0.541, 0.517, 0.578, 0.638, 0.539, 0.486),
+  distance = c(1.33, 1.35, 1.42, 0.309, 0.560, 0.564, 0.506, 0.677, 0.742, 0.983, 1.22, 1.28),
+  stringsAsFactors = FALSE
+)
+
+colnames(df) <- c("Cluster", "Name", "Launch Speed", "Launch Angle", "Bat Speed", "BIP Value", "Distance from Cluster Averages")
+
+highlight_names <- c("Jankowski, Travis", "Palacios, Richie", "Canzone, Dominic", "Grichuk, Randal")
+
+library(gt)
+
+df |>
+  gt() |>
+  tab_header(
+    title = "Batters Closest to the Averages of Each Cluster (min. 50 Batted Balls)"
+  ) |>
+  tab_style(
+    style = cell_fill(color = "lightgreen"),
+    locations = cells_body(
+      rows = df$Name %in% highlight_names
+    )
+  )
+
+# Print the data frame nicely
+kable(df)
+
+library(knitr)
+
+kable(df, caption = "Batters Closest to the Averages of Each Cluster")
+
+library(gt)
+
+colnames(df) <- c("Cluster", "Name", "Launch Speed", "Launch Angle", "Bat Speed", "BIP Value", "Distance from Cluster Averages")
+
+df$batter_name <- as.character(df$batter_name)
+
+# Define batters to highlight
+highlight_names <- c("Realmuto, J.T.", "Turang, Brice", "McCarthy, Jake")
+
+
+gt(df) %>%
+  tab_header(
+    title = "Batters Closest to the Averages of Each Cluster"
+  ) |>
+  tab_style(
+    style = cell_fill(color = "lightgreen"),
+    locations = cells_body(
+      rows = batter_name %in% highlight_names
+    )
+  )
+
 
