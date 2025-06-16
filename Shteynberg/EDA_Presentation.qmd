@@ -1,0 +1,394 @@
+---
+title: "Beyond the Box Score: Exploring Contact Quality in 2024 MLB"
+author: "Emily Shteynberg and Cale Latimer"
+format:
+  revealjs:
+    theme: EDA_theme.scss
+    chalkboard: true
+    smaller: true
+    slide-number: c/t
+    code-line-numbers: false
+    linestretch: 1.25
+    html-math-method:
+      method: mathjax
+      url: "https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"
+---
+
+## Evaluating Batter Performance Requires More Than Just Outcomes
+
+* Traditional stats miss *how* contact is made
+
+* Batted ball metrics connect mechanics to outcomes on a per-play level
+
+* Contact quality drives decisions in scouting, player development, and game strategy
+
+## Our Data: Batted Ball Tracking
+
+* Each row is a batted ball from 2024 MLB regular season (April 3, 2024 onward)[^1]
+
+[^1]: Courtesy of Baseball Savant and accessed via sabRmetrics package
+
+. . . 
+
+* 120,017 rows and 53 columns
+
+. . .
+
+* How and where was the ball thrown? How and where was the ball hit? What was the outcome?
+
+. . .
+
+* Core variables:
+  <ul>
+    <li class="fragment">Pitch mechanics: pitch type, release speed, handedness</li>
+    <li class="fragment">Batter mechanics: launch speed, launch angle, bat speed, swing length, handedness</li>
+    <li class="fragment">Game context: count, outs, inning, defensive shift</li>
+    <li class="fragment">Result: play outcome, fielding position, ball location</li>
+  </ul>
+
+## Question #1: Is there a “sweet spot” — a combination of launch speed and angle — that maximizes hit rate?
+
+. . .
+
+::: {.callout-note title="Formula" style="font-size: 1.5em;"}
+
+$$
+  \text{Hit Rate} = \frac{\text{Hits}}{\text{Batted Balls}}
+                   = \frac{\text{Singles} + \text{Doubles} + \text{Triples} + \text{Home Runs}}{\text{Batted Balls}}
+$$
+:::
+
+
+## There is no single sweet spot; the launch angle that maximizes hit rate changes with launch speed
+
+```{r}
+#| echo: false
+#| fig-align: center
+
+library(tidyverse)
+library(viridis)
+mlb <- read_csv("https://raw.githubusercontent.com/36-SURE/2025/main/data/mlb_batted_balls.csv")
+ 
+mlb |> 
+  mutate(is_hit = ifelse(events %in% c("single", "double", "triple", "home_run"), 1, 0)) |> 
+  ggplot(aes(x = launch_speed, y = launch_angle)) +
+   stat_summary_hex(
+    aes(z = is_hit), 
+    fun = mean, 
+    bins = 40
+  ) +
+  scale_fill_viridis_c(option="C", name = "Hit Rate", limits = c(0, 1)) +
+  labs(
+    x = "Launch Speed (mph)", 
+    y = "Launch Angle (°)"
+  ) +
+  theme_minimal(base_size = 16) +
+  theme(
+    axis.title = element_text(face = "bold"),
+    legend.title = element_text(face = "bold")
+  )
+
+```
+
+
+## Question #2: Do batters perform better when facing opposite-handed pitchers?
+
+. . .
+
+* Only included batters with at least 20 batted balls against each of same- and opposite-handed pitchers
+
+::: {.callout-note title="Formula" style="font-size: 1.5em;"}
+$$
+  \begin{aligned}
+  \text{Ball-in-Play (BIP) Value} &= \frac{\text{Total Bases}}{\text{Batted Balls}} \\[1em]
+                   &= \frac{\text{Singles} + 2\times\text{Doubles} + 3\times\text{Triples} + 4\times\text{Home Runs}}{\text{Batted Balls}}
+  \end{aligned}
+$$
+:::
+
+
+## Opposite-handed matchups tend to yield higher BIP value — but exceptions are common
+
+```{r}
+#| echo: false
+#| fig-align: center
+mlb |>
+  filter(!is.na(events), !is.na(bat_side), !is.na(pitch_hand)) |>
+  mutate(side = case_when(
+    (bat_side == "R" & pitch_hand == "R") | (bat_side == "L" & pitch_hand == "L") ~ "SameSide",
+    (bat_side == "L" & pitch_hand == "R") | (bat_side == "R" & pitch_hand == "L") ~ "OppositeSide"
+  )) |>
+  group_by(batter_name) |>
+  summarise(
+    bip_value_same = (
+      sum(events == "single" & side == "SameSide", na.rm = TRUE) * 1 +
+        sum(events == "double" & side == "SameSide", na.rm = TRUE) * 2 +
+        sum(events == "triple" & side == "SameSide", na.rm = TRUE) * 3 +
+        sum(events == "home_run" & side == "SameSide", na.rm = TRUE) * 4
+    ) / sum(side == "SameSide", na.rm = TRUE),
+    
+    bip_value_oppo = (
+      sum(events == "single" & side == "OppositeSide", na.rm = TRUE) * 1 +
+        sum(events == "double" & side == "OppositeSide", na.rm = TRUE) * 2 +
+        sum(events == "triple" & side == "OppositeSide", na.rm = TRUE) * 3 +
+        sum(events == "home_run" & side == "OppositeSide", na.rm = TRUE) * 4
+    ) / sum(side == "OppositeSide", na.rm = TRUE),
+    
+    n_same = sum(side == "SameSide", na.rm = TRUE),
+    n_oppo = sum(side == "OppositeSide", na.rm = TRUE),
+    .groups = "drop"
+  ) |>
+  filter(n_same >= 20, n_oppo >= 20) |>
+  mutate(bip_advantage = case_when(
+    bip_value_same > bip_value_oppo ~ "Same-Handed Advantage",
+    bip_value_same < bip_value_oppo ~ "Opposite-Handed Advantage",
+    TRUE ~ "No Advantage"
+  )) |>
+  ggplot(aes(x = bip_value_oppo, y = bip_value_same)) +
+  geom_point(aes(color = bip_advantage), alpha = 0.75) +
+  scale_color_manual(values = c("red", "#117733", "#3399FF")) +
+  geom_smooth(method = "lm", color = "black") +
+  geom_abline(intercept = 0, slope = 1, linetype = "dashed", color = "black") +
+  labs(
+    x = "Avg BIP Value for\nOpposite-Handed Matchups",
+    y = "Avg BIP Value for\nSame-Handed Matchups",
+    color = "Batters with... "
+  ) +
+  coord_fixed() +
+  theme_minimal(base_size = 16) +
+  theme(
+    axis.title = element_text(face = "bold"),
+    legend.title = element_text(face = "bold"),
+    legend.text=element_text(size=16)
+  )
+```
+
+## Clustering Batters Based on Launch Speed, Launch Angle, Bat Speed Reveals 4 Archetypes
+
+```{r}
+set.seed(42)
+mlb_features <- mlb |>
+  group_by(batter_name) |> 
+  summarize(
+    avg_launch_speed=mean(launch_speed, na.rm=TRUE),
+    avg_launch_angle=mean(launch_angle, na.rm=TRUE),
+    avg_bat_speed=mean(bat_speed, na.rm=TRUE),
+    balls_in_play=n()
+  ) |> 
+  filter(balls_in_play>=50) |> 
+  select(-balls_in_play) |> 
+  drop_na()
+
+#standardize 
+std_mlb_features <-mlb_features |> 
+  select(-batter_name) |> 
+  scale()
+
+#default kmeans (Hartigan-Wong)
+kmeans_result<- std_mlb_features |> 
+  kmeans(centers=4, nstart=100)
+
+# #to visualize results with many dimensions (features), do PCA and plot
+# #plot top 2 dimensions (capture most of the variation in the data)
+# library(factoextra)
+# kmeans_result |> 
+#   fviz_cluster(data=std_mlb_features,
+#                geom="point",
+#                ellipse=FALSE,
+#                show.clust.cent = FALSE,
+#                palette="Set1",
+#                shape=16)+
+#   ggthemes::scale_color_colorblind()+
+#   labs(
+#     x = "Principal Component 1",
+#     y = "Principal Component 2",
+#     color = "Cluster"
+#   ) +
+#   ggthemes::scale_color_colorblind() +
+#   theme_minimal(base_size = 16) +
+#   theme(
+#     axis.title = element_text(face = "bold"),
+#     legend.title = element_text(face = "bold"),
+#     plot.title=element_blank(),
+#   )
+
+#clusters
+clustered_batters <- data.frame(
+  batter_name = mlb_features$batter_name,
+  cluster=kmeans_result$cluster
+) 
+
+
+#temporarily join cluster info to compute BIP value per cluster
+mlb_temp <- mlb |> 
+  left_join(clustered_batters, by = "batter_name") |> 
+  filter(!is.na(cluster))
+
+#compute avg BIP value per cluster
+#sort clusters by avg bip value (ascending), then just call them 1 through 4
+cluster_ranking <- mlb_temp |> 
+  group_by(cluster) |> 
+  summarize(
+    avg_bip_value = mean(case_when(
+      events == "single" ~ 1,
+      events == "double" ~ 2,
+      events == "triple" ~ 3,
+      events == "home_run" ~ 4,
+      TRUE ~ 0
+    ), na.rm = TRUE),
+    .groups = "drop"
+  ) |> 
+  arrange(avg_bip_value) |> 
+  mutate(ordered_cluster = row_number())
+
+#reassign cluster labels in clustered_batters
+clustered_batters <- clustered_batters |>
+  left_join(cluster_ranking, by = "cluster") |>
+  select(batter_name, cluster = ordered_cluster)
+
+#append clusters to original df
+mlb_features_clustered <- mlb |> 
+  left_join(clustered_batters, by="batter_name") |> 
+  filter(!is.na(cluster))
+
+#append clusters to smaller df
+mlb_features_clustered_subset <- mlb_features |> 
+  left_join(clustered_batters, by="batter_name") |> 
+  filter(!is.na(cluster))
+
+mlb_features_clustered_subset_labels <- mlb_features_clustered_subset |> 
+  mutate(cluster_label = factor(cluster, levels = 1:4, labels = c(
+    "1: Weak Contact Hitters",
+    "2: Balanced Hitters",
+    "3: Line Drive Gap Hitters",
+    "4: Power Sluggers"
+  )))
+
+mlb_features_clustered_subset_labels |> 
+  ggplot(aes(x = avg_launch_speed, y = avg_launch_angle, color = cluster_label)) +
+  geom_point(alpha = 0.8) +
+  labs(
+    x = "Avg Launch Speed (mph)",
+    y = "Avg Launch Angle (°)",
+    color = "Cluster"
+  ) +
+  ggthemes::scale_color_colorblind() +
+  theme_minimal(base_size = 16) +
+  theme(
+    axis.title = element_text(face = "bold"),
+    axis.text=element_text(size= 16),
+    legend.title = element_text(face = "bold"),
+    legend.text = element_text(size=16),
+    plot.title = element_blank()
+  )
+
+
+```
+
+## Contact Metrics Vary by Cluster
+
+```{r}
+library(patchwork)
+base_bar_theme <- theme_minimal(base_size = 14) +
+  theme(
+    axis.title =element_text(face = "bold"),
+    plot.title = element_text(face = "bold", hjust = 0.5)
+  )
+
+#bar plot: Launch Speed per cluster
+launch_speed_bar <- mlb_features_clustered_subset |>
+  group_by(cluster) |>
+  summarize(avg = mean(avg_launch_speed, na.rm = TRUE)) |>
+  ggplot(aes(x = factor(cluster), y = avg)) +
+  geom_col(fill = "firebrick") +
+  labs(title = "Average Launch Speed", x ="Cluster", y= "mph") +
+  base_bar_theme
+
+#bar plot: launch Angle per cluster
+launch_angle_bar <- mlb_features_clustered_subset |>
+  group_by(cluster) |>
+  summarize(avg = mean(avg_launch_angle, na.rm = TRUE)) |>
+  ggplot(aes(x = factor(cluster), y = avg)) +
+  geom_col(fill = "firebrick")+
+  labs(title = "Average Launch Angle", x = "Cluster", y = "Degrees") +
+  base_bar_theme
+
+#bar plot: bat Speed per cluster
+bat_speed_bar <- mlb_features_clustered_subset |>
+  group_by(cluster) |>
+  summarize(avg = mean(avg_bat_speed, na.rm = TRUE)) |>
+  ggplot(aes(x = factor(cluster), y = avg)) +
+  geom_col(fill = "firebrick") +
+  labs(title = "Average Bat Speed", x = "Cluster", y = "mph") +
+  base_bar_theme
+
+# Combine
+combined_plot <- launch_speed_bar +launch_angle_bar + bat_speed_bar + plot_layout(ncol = 3)
+combined_plot
+
+```
+
+## Higher-Quality Contact Yields More Valuable Batted Balls
+
+```{r}
+
+#avg bip value per cluster
+#divide hits by total batted balls in each cluster
+cluster_ranking |> 
+  ggplot(aes(x = factor(ordered_cluster), y = avg_bip_value)) +
+  geom_col(fill = "firebrick") +
+  labs(x = "Cluster", y = "Avg BIP Value") +
+  theme_minimal(base_size=16)+
+  labs(
+    x = "Cluster",
+    y = "Avg BIP Value"
+  ) +
+  theme(
+    plot.title = element_blank(),
+    axis.title = element_text(face = "bold"),
+  )+
+  geom_text(
+    aes(label = round(avg_bip_value, 3)), 
+    vjust = -0.5, 
+    size = 5, 
+    fontface = "bold"
+  )+ 
+  scale_y_continuous(expand = expansion(mult = c(0, 0.1))) 
+```
+
+## Final Remarks: Contact Quality and Context Help Determine Hit Value
+
+* No single fixed "sweet spot" — optimal launch angle varies with launch speed
+
+. . .
+
+* Opposite-handed matchups often offer an edge — but not for every batter
+
+. . .
+
+* Clustering reveals 4 batter archetypes; stronger contact profiles yield higher batted-ball value
+
+. . .
+
+* Future work: explore defensive shifts, pitch mechanics, team-level clustering, park effects, changes in performance over the season
+
+# Appendix
+
+## Introduction
+
+Quarto enables you to weave together content and executable code into a finished presentation. To learn more about Quarto presentations see <https://quarto.org/docs/presentations/>.
+
+## Bullets
+
+When you click the **Render** button a document will be generated that includes:
+
+-   Content authored with markdown
+-   Output from executable code
+
+## Code
+
+When you click the **Render** button a presentation will be generated that includes both content and the output of embedded code. You can embed code like this:
+
+```{r}
+1 + 1
+```
