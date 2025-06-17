@@ -143,7 +143,6 @@ mlb |>
   ggplot(aes(x = bip_value_oppo, y = bip_value_same)) +
   geom_point(aes(color = bip_advantage), alpha = 0.75) +
   scale_color_manual(values = c("red", "#117733", "#3399FF")) +
-  geom_smooth(method = "lm", color = "black") +
   geom_abline(intercept = 0, slope = 1, linetype = "dashed", color = "black") +
   labs(
     x = "Avg BIP Value for\nOpposite-Handed Matchups",
