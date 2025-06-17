@@ -29,7 +29,7 @@
       vertical-align: middle;
     }
   </style>
-  <link rel="stylesheet" href="EDA_Presentation_files/libs/revealjs/dist/theme/quarto-1e1f016d54cbdb7550d6d2e04cd05812.css">
+  <link rel="stylesheet" href="EDA_Presentation_files/libs/revealjs/dist/theme/quarto-7dae301d69b8f9a36cc90ed028562fe7.css">
   <link href="EDA_Presentation_files/libs/revealjs/plugin/quarto-line-highlight/line-highlight.css" rel="stylesheet">
   <link href="EDA_Presentation_files/libs/revealjs/plugin/reveal-menu/menu.css" rel="stylesheet">
   <link href="EDA_Presentation_files/libs/revealjs/plugin/reveal-menu/quarto-menu.css" rel="stylesheet">
@@ -155,11 +155,6 @@ Emily Shteynberg and Cale Latimer
 </ul>
 <div class="fragment">
 <ul>
-<li>120,017 rows and 53 columns</li>
-</ul>
-</div>
-<div class="fragment">
-<ul>
 <li>How and where was the ball thrown? How and where was the ball hit? What was the outcome?</li>
 </ul>
 </div>
@@ -254,8 +249,8 @@ Result: play outcome, fielding position, ball location
 <h2>Higher-Quality Contact Yields More Valuable Batted Balls</h2>
 
 <img data-src="EDA_Presentation_files/figure-revealjs/unnamed-chunk-5-1.png" width="960" class="r-stretch"></section>
-<section id="final-remarks-contact-quality-and-context-help-determine-hit-value" class="slide level2">
-<h2>Final Remarks: Contact Quality and Context Help Determine Hit Value</h2>
+<section id="final-remarks-contact-quality-and-context-help-determine-batted-ball-value" class="slide level2">
+<h2>Final Remarks: Contact Quality and Context Help Determine Batted Ball Value</h2>
 <ul>
 <li>No single fixed “sweet spot” — optimal launch angle varies with launch speed</li>
 </ul>
@@ -266,12 +261,12 @@ Result: play outcome, fielding position, ball location
 </div>
 <div class="fragment">
 <ul>
-<li>Clustering reveals 4 batter archetypes; stronger contact profiles yield higher batted-ball value</li>
+<li>Clustering reveals 4 batter archetypes; stronger contact profiles yield higher batted ball value</li>
 </ul>
 </div>
 <div class="fragment">
 <ul>
-<li>Future work: explore defensive shifts, pitch mechanics, team-level clustering, park effects, changes in performance over the season</li>
+<li>Future work: explore defensive shifts, batter and pitcher skill, team-level clustering, changes in performance over the season, strikeouts and walks</li>
 </ul>
 </div>
 </section>
@@ -280,24 +275,609 @@ Result: play outcome, fielding position, ball location
 <h1>Appendix</h1>
 
 </section>
-<section id="introduction" class="slide level2">
-<h2>Introduction</h2>
-<p>Quarto enables you to weave together content and executable code into a finished presentation. To learn more about Quarto presentations see <a href="https://quarto.org/docs/presentations/" class="uri">https://quarto.org/docs/presentations/</a>.</p>
-</section>
-<section id="bullets" class="slide level2">
-<h2>Bullets</h2>
-<p>When you click the <strong>Render</strong> button a document will be generated that includes:</p>
-<ul>
-<li>Content authored with markdown</li>
-<li>Output from executable code</li>
-</ul>
-</section>
-<section id="code" class="slide level2">
-<h2>Code</h2>
-<p>When you click the <strong>Render</strong> button a presentation will be generated that includes both content and the output of embedded code. You can embed code like this:</p>
+<section id="top-5-batters-by-event-type" class="slide level2">
+<h2>Top 5 Batters by Event Type</h2>
+
+<img data-src="EDA_Presentation_files/figure-revealjs/unnamed-chunk-6-1.png" width="960" class="r-stretch"></section>
+<section id="hit-rate-for-each-event-by-launch-speed-angle" class="slide level2">
+<h2>Hit Rate for Each Event by Launch Speed &amp; Angle</h2>
+
+<img data-src="EDA_Presentation_files/figure-revealjs/unnamed-chunk-7-1.png" width="960" class="r-stretch"></section>
+<section id="hit-rate-for-each-batted-ball-type-by-launch-speed-angle" class="slide level2">
+<h2>Hit Rate for Each Batted Ball Type by Launch Speed &amp; Angle</h2>
+
+<img data-src="EDA_Presentation_files/figure-revealjs/unnamed-chunk-8-1.png" width="960" class="r-stretch"></section>
+<section id="elbow-plot" class="slide level2">
+<h2>Elbow Plot</h2>
+
+<img data-src="EDA_Presentation_files/figure-revealjs/unnamed-chunk-9-1.png" width="960" class="r-stretch"></section>
+<section id="hit-rate-by-event-for-each-cluster" class="slide level2">
+<h2>Hit Rate by Event for each Cluster</h2>
+
+<img data-src="EDA_Presentation_files/figure-revealjs/unnamed-chunk-10-1.png" width="960" class="r-stretch"></section>
+<section id="hit-rate-by-batted-ball-type-for-each-cluster" class="slide level2">
+<h2>Hit Rate by Batted Ball Type for each cluster</h2>
+
+<img data-src="EDA_Presentation_files/figure-revealjs/unnamed-chunk-11-1.png" width="960" class="r-stretch"></section>
+<section id="batters-closest-to-the-averages-of-each-cluster-min.-50-batted-balls" class="slide level2">
+<h2>Batters Closest to the Averages of Each Cluster (min. 50 Batted Balls)</h2>
 <div class="cell">
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] 2</code></pre>
+<div class="cell-output-display">
+<div id="behlmrayyf" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
+<style>#behlmrayyf table {
+  font-family: system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#behlmrayyf thead, #behlmrayyf tbody, #behlmrayyf tfoot, #behlmrayyf tr, #behlmrayyf td, #behlmrayyf th {
+  border-style: none;
+}
+
+#behlmrayyf p {
+  margin: 0;
+  padding: 0;
+}
+
+#behlmrayyf .gt_table {
+  display: table;
+  border-collapse: collapse;
+  line-height: normal;
+  margin-left: auto;
+  margin-right: auto;
+  color: #333333;
+  font-size: 16px;
+  font-weight: normal;
+  font-style: normal;
+  background-color: #FFFFFF;
+  width: 100%;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #A8A8A8;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #A8A8A8;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+}
+
+#behlmrayyf .gt_caption {
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+
+#behlmrayyf .gt_title {
+  color: #333333;
+  font-size: 125%;
+  font-weight: initial;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-bottom-color: #FFFFFF;
+  border-bottom-width: 0;
+}
+
+#behlmrayyf .gt_subtitle {
+  color: #333333;
+  font-size: 85%;
+  font-weight: initial;
+  padding-top: 3px;
+  padding-bottom: 5px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-top-color: #FFFFFF;
+  border-top-width: 0;
+}
+
+#behlmrayyf .gt_heading {
+  background-color: #FFFFFF;
+  text-align: center;
+  border-bottom-color: #FFFFFF;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+}
+
+#behlmrayyf .gt_bottom_border {
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#behlmrayyf .gt_col_headings {
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+}
+
+#behlmrayyf .gt_col_heading {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: normal;
+  text-transform: inherit;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: bottom;
+  padding-top: 5px;
+  padding-bottom: 6px;
+  padding-left: 5px;
+  padding-right: 5px;
+  overflow-x: hidden;
+}
+
+#behlmrayyf .gt_column_spanner_outer {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: normal;
+  text-transform: inherit;
+  padding-top: 0;
+  padding-bottom: 0;
+  padding-left: 4px;
+  padding-right: 4px;
+}
+
+#behlmrayyf .gt_column_spanner_outer:first-child {
+  padding-left: 0;
+}
+
+#behlmrayyf .gt_column_spanner_outer:last-child {
+  padding-right: 0;
+}
+
+#behlmrayyf .gt_column_spanner {
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  vertical-align: bottom;
+  padding-top: 5px;
+  padding-bottom: 5px;
+  overflow-x: hidden;
+  display: inline-block;
+  width: 100%;
+}
+
+#behlmrayyf .gt_spanner_row {
+  border-bottom-style: hidden;
+}
+
+#behlmrayyf .gt_group_heading {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: middle;
+  text-align: left;
+}
+
+#behlmrayyf .gt_empty_group_heading {
+  padding: 0.5px;
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  vertical-align: middle;
+}
+
+#behlmrayyf .gt_from_md > :first-child {
+  margin-top: 0;
+}
+
+#behlmrayyf .gt_from_md > :last-child {
+  margin-bottom: 0;
+}
+
+#behlmrayyf .gt_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  margin: 10px;
+  border-top-style: solid;
+  border-top-width: 1px;
+  border-top-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: middle;
+  overflow-x: hidden;
+}
+
+#behlmrayyf .gt_stub {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-right-style: solid;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#behlmrayyf .gt_stub_row_group {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-right-style: solid;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  padding-left: 5px;
+  padding-right: 5px;
+  vertical-align: top;
+}
+
+#behlmrayyf .gt_row_group_first td {
+  border-top-width: 2px;
+}
+
+#behlmrayyf .gt_row_group_first th {
+  border-top-width: 2px;
+}
+
+#behlmrayyf .gt_summary_row {
+  color: #333333;
+  background-color: #FFFFFF;
+  text-transform: inherit;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#behlmrayyf .gt_first_summary_row {
+  border-top-style: solid;
+  border-top-color: #D3D3D3;
+}
+
+#behlmrayyf .gt_first_summary_row.thick {
+  border-top-width: 2px;
+}
+
+#behlmrayyf .gt_last_summary_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#behlmrayyf .gt_grand_summary_row {
+  color: #333333;
+  background-color: #FFFFFF;
+  text-transform: inherit;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#behlmrayyf .gt_first_grand_summary_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-top-style: double;
+  border-top-width: 6px;
+  border-top-color: #D3D3D3;
+}
+
+#behlmrayyf .gt_last_grand_summary_row_top {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-bottom-style: double;
+  border-bottom-width: 6px;
+  border-bottom-color: #D3D3D3;
+}
+
+#behlmrayyf .gt_striped {
+  background-color: rgba(128, 128, 128, 0.05);
+}
+
+#behlmrayyf .gt_table_body {
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#behlmrayyf .gt_footnotes {
+  color: #333333;
+  background-color: #FFFFFF;
+  border-bottom-style: none;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+}
+
+#behlmrayyf .gt_footnote {
+  margin: 0px;
+  font-size: 90%;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#behlmrayyf .gt_sourcenotes {
+  color: #333333;
+  background-color: #FFFFFF;
+  border-bottom-style: none;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+}
+
+#behlmrayyf .gt_sourcenote {
+  font-size: 90%;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#behlmrayyf .gt_left {
+  text-align: left;
+}
+
+#behlmrayyf .gt_center {
+  text-align: center;
+}
+
+#behlmrayyf .gt_right {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+#behlmrayyf .gt_font_normal {
+  font-weight: normal;
+}
+
+#behlmrayyf .gt_font_bold {
+  font-weight: bold;
+}
+
+#behlmrayyf .gt_font_italic {
+  font-style: italic;
+}
+
+#behlmrayyf .gt_super {
+  font-size: 65%;
+}
+
+#behlmrayyf .gt_footnote_marks {
+  font-size: 75%;
+  vertical-align: 0.4em;
+  position: initial;
+}
+
+#behlmrayyf .gt_asterisk {
+  font-size: 100%;
+  vertical-align: 0;
+}
+
+#behlmrayyf .gt_indent_1 {
+  text-indent: 5px;
+}
+
+#behlmrayyf .gt_indent_2 {
+  text-indent: 10px;
+}
+
+#behlmrayyf .gt_indent_3 {
+  text-indent: 15px;
+}
+
+#behlmrayyf .gt_indent_4 {
+  text-indent: 20px;
+}
+
+#behlmrayyf .gt_indent_5 {
+  text-indent: 25px;
+}
+
+#behlmrayyf .katex-display {
+  display: inline-flex !important;
+  margin-bottom: 0.75em !important;
+}
+
+#behlmrayyf div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
+  height: 0px !important;
+}
+</style>
+
+<table class="gt_table caption-top" data-quarto-postprocess="true" data-quarto-disable-processing="false" data-quarto-bootstrap="false">
+<thead>
+<tr class="gt_col_headings header">
+<th id="Cluster" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">Cluster</th>
+<th id="Name" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">Name</th>
+<th id="Avg-Launch-Speed" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">Avg Launch Speed</th>
+<th id="Avg-Launch-Angle" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">Avg Launch Angle</th>
+<th id="Avg-Bat-Speed" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">Avg Bat Speed</th>
+<th id="BIP-Value" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">BIP Value</th>
+<th id="Distance-from-Cluster-Avgs" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">Distance from Cluster Avgs</th>
+</tr>
+</thead>
+<tbody class="gt_table_body">
+<tr class="odd">
+<td class="gt_row gt_right" headers="Cluster" style="background-color: #90EE90">1</td>
+<td class="gt_row gt_left" headers="Name" style="background-color: #90EE90">Jankowski, Travis</td>
+<td class="gt_row gt_right" headers="Avg Launch Speed" style="background-color: #90EE90">84.0</td>
+<td class="gt_row gt_right" headers="Avg Launch Angle" style="background-color: #90EE90">5.31</td>
+<td class="gt_row gt_right" headers="Avg Bat Speed" style="background-color: #90EE90">65.3</td>
+<td class="gt_row gt_right" headers="BIP Value" style="background-color: #90EE90">0.280</td>
+<td class="gt_row gt_right" headers="Distance from Cluster Avgs" style="background-color: #90EE90">1.330</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_right" headers="Cluster">1</td>
+<td class="gt_row gt_left" headers="Name">Sánchez, Angel</td>
+<td class="gt_row gt_right" headers="Avg Launch Speed">81.9</td>
+<td class="gt_row gt_right" headers="Avg Launch Angle">5.04</td>
+<td class="gt_row gt_right" headers="Avg Bat Speed">66.2</td>
+<td class="gt_row gt_right" headers="BIP Value">0.239</td>
+<td class="gt_row gt_right" headers="Distance from Cluster Avgs">1.350</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_right" headers="Cluster">1</td>
+<td class="gt_row gt_left" headers="Name">Bruján, Vidal</td>
+<td class="gt_row gt_right" headers="Avg Launch Speed">83.7</td>
+<td class="gt_row gt_right" headers="Avg Launch Angle">6.79</td>
+<td class="gt_row gt_right" headers="Avg Bat Speed">65.2</td>
+<td class="gt_row gt_right" headers="BIP Value">0.411</td>
+<td class="gt_row gt_right" headers="Distance from Cluster Avgs">1.420</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_right" headers="Cluster" style="background-color: #90EE90">2</td>
+<td class="gt_row gt_left" headers="Name" style="background-color: #90EE90">Palacios, Richie</td>
+<td class="gt_row gt_right" headers="Avg Launch Speed" style="background-color: #90EE90">86.1</td>
+<td class="gt_row gt_right" headers="Avg Launch Angle" style="background-color: #90EE90">14.50</td>
+<td class="gt_row gt_right" headers="Avg Bat Speed" style="background-color: #90EE90">68.5</td>
+<td class="gt_row gt_right" headers="BIP Value" style="background-color: #90EE90">0.417</td>
+<td class="gt_row gt_right" headers="Distance from Cluster Avgs" style="background-color: #90EE90">0.309</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_right" headers="Cluster">2</td>
+<td class="gt_row gt_left" headers="Name">Gomes, Yan</td>
+<td class="gt_row gt_right" headers="Avg Launch Speed">85.8</td>
+<td class="gt_row gt_right" headers="Avg Launch Angle">14.10</td>
+<td class="gt_row gt_right" headers="Avg Bat Speed">68.8</td>
+<td class="gt_row gt_right" headers="BIP Value">0.423</td>
+<td class="gt_row gt_right" headers="Distance from Cluster Avgs">0.560</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_right" headers="Cluster">2</td>
+<td class="gt_row gt_left" headers="Name">Martini, Nick</td>
+<td class="gt_row gt_right" headers="Avg Launch Speed">86.8</td>
+<td class="gt_row gt_right" headers="Avg Launch Angle">14.30</td>
+<td class="gt_row gt_right" headers="Avg Bat Speed">69.0</td>
+<td class="gt_row gt_right" headers="BIP Value">0.422</td>
+<td class="gt_row gt_right" headers="Distance from Cluster Avgs">0.564</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_right" headers="Cluster" style="background-color: #90EE90">3</td>
+<td class="gt_row gt_left" headers="Name" style="background-color: #90EE90">Canzone, Dominic</td>
+<td class="gt_row gt_right" headers="Avg Launch Speed" style="background-color: #90EE90">90.0</td>
+<td class="gt_row gt_right" headers="Avg Launch Angle" style="background-color: #90EE90">9.69</td>
+<td class="gt_row gt_right" headers="Avg Bat Speed" style="background-color: #90EE90">72.0</td>
+<td class="gt_row gt_right" headers="BIP Value" style="background-color: #90EE90">0.541</td>
+<td class="gt_row gt_right" headers="Distance from Cluster Avgs" style="background-color: #90EE90">0.506</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_right" headers="Cluster">3</td>
+<td class="gt_row gt_left" headers="Name">Diaz, Yainer</td>
+<td class="gt_row gt_right" headers="Avg Launch Speed">90.1</td>
+<td class="gt_row gt_right" headers="Avg Launch Angle">8.95</td>
+<td class="gt_row gt_right" headers="Avg Bat Speed">72.5</td>
+<td class="gt_row gt_right" headers="BIP Value">0.517</td>
+<td class="gt_row gt_right" headers="Distance from Cluster Avgs">0.677</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_right" headers="Cluster">3</td>
+<td class="gt_row gt_left" headers="Name">Realmuto, J.T.</td>
+<td class="gt_row gt_right" headers="Avg Launch Speed">89.0</td>
+<td class="gt_row gt_right" headers="Avg Launch Angle">9.24</td>
+<td class="gt_row gt_right" headers="Avg Bat Speed">72.6</td>
+<td class="gt_row gt_right" headers="BIP Value">0.578</td>
+<td class="gt_row gt_right" headers="Distance from Cluster Avgs">0.742</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_right" headers="Cluster" style="background-color: #90EE90">4</td>
+<td class="gt_row gt_left" headers="Name" style="background-color: #90EE90">Grichuk, Randal</td>
+<td class="gt_row gt_right" headers="Avg Launch Speed" style="background-color: #90EE90">90.6</td>
+<td class="gt_row gt_right" headers="Avg Launch Angle" style="background-color: #90EE90">17.40</td>
+<td class="gt_row gt_right" headers="Avg Bat Speed" style="background-color: #90EE90">73.3</td>
+<td class="gt_row gt_right" headers="BIP Value" style="background-color: #90EE90">0.638</td>
+<td class="gt_row gt_right" headers="Distance from Cluster Avgs" style="background-color: #90EE90">0.983</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_right" headers="Cluster">4</td>
+<td class="gt_row gt_left" headers="Name">Langford, Wyatt</td>
+<td class="gt_row gt_right" headers="Avg Launch Speed">89.5</td>
+<td class="gt_row gt_right" headers="Avg Launch Angle">17.00</td>
+<td class="gt_row gt_right" headers="Avg Bat Speed">73.7</td>
+<td class="gt_row gt_right" headers="BIP Value">0.539</td>
+<td class="gt_row gt_right" headers="Distance from Cluster Avgs">1.220</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_right" headers="Cluster">4</td>
+<td class="gt_row gt_left" headers="Name">Rice, Ben</td>
+<td class="gt_row gt_right" headers="Avg Launch Speed">90.0</td>
+<td class="gt_row gt_right" headers="Avg Launch Angle">17.70</td>
+<td class="gt_row gt_right" headers="Avg Bat Speed">71.7</td>
+<td class="gt_row gt_right" headers="BIP Value">0.486</td>
+<td class="gt_row gt_right" headers="Distance from Cluster Avgs">1.280</td>
+</tr>
+</tbody>
+</table>
+
+</div>
 </div>
 </div>
 

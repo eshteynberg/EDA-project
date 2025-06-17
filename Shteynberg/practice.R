@@ -323,14 +323,37 @@ mlb |>
   count(batter_name, events, sort=TRUE) |> 
   group_by(events) |> 
   slice_max(n, n=5) |> 
-  ggplot(aes(x=reorder_within(batter_name, n, events), y=n, fill=events))+
+  ungroup() |> 
+  mutate(
+    events = case_when(
+      events == "single" ~ "Single",
+      events == "double" ~ "Double",
+      events == "triple" ~ "Triple",
+      events == "home_run" ~ "Home Run"
+    ),
+    events = factor(events, levels = c("Single", "Double", "Triple", "Home Run"))
+  ) |> 
+  ggplot(aes(x = reorder_within(batter_name, n, events), y = n, fill = events)) +
   geom_col(show.legend=FALSE)+
   facet_wrap(~events, scales ="free")+
   coord_flip()+
   scale_x_reordered()+
   scale_y_continuous(expand=c(0,0))+
-  labs(title="Top 5 Batters by Event Type", x="Batter", y="Count")+
-  theme_minimal()
+  labs(x="Batter", y="Count")+
+  theme_minimal(base_size=16)+
+  theme(
+    axis.title = element_text(face = "bold"),
+    legend.title = element_text(face = "bold"),
+    strip.text = element_text(face = "bold")
+  )+
+  scale_fill_manual(
+    values = c(
+      "Single" = "#E69F00",   
+      "Double" = "#009E73",   
+      "Triple" = "#0072B2",   
+      "Home Run" = "#D55E00"
+    )
+  )
 
 #average launch speed by batter
 mlb |> 
@@ -398,7 +421,6 @@ mlb |>
 #outcome proportions by pitch type
 #how do outcomes vary by pitch type
 #are certain pitches more likely to lead to good or bad outcomes?
-library(viridis)
 mlb |> 
   filter(!is.na(pitch_name), !is.na(events)) |> 
   count(pitch_name, events) |> 
@@ -757,6 +779,7 @@ bip_table <- cluster_ranking |>
 
 ###############
 #similar multi bar plot as before but with hit rate
+#count types of hits per cluster
 cluster_hit_rates <- mlb_features_clustered |> 
   filter(events %in% c("single", "double", "triple", "home_run")) |> 
   group_by(cluster) |>
@@ -772,13 +795,19 @@ hit_type_plot <- cluster_hit_rates |>
   mutate(events = factor(events, levels = c("single", "double", "triple", "home_run"))) |> 
   ggplot(aes(x = factor(cluster), y = hit_rate, fill = events)) +
   geom_bar(stat = "identity", position = "dodge") +
-  labs(x = "Cluster", y = "Count", fill = "Event", title = "Hit Rates by Event for Each Cluster") +
+  labs(x = "Cluster", y = "Rate", fill = "Event", title = "Hit Rates by Event for Each Cluster") +
   scale_fill_manual(
     values = c(
       "single" = "#E69F00",   
       "double" = "#009E73",   
       "triple" = "#0072B2",   
       "home_run" = "#D55E00"
+    ),
+    labels = c(
+      "single" = "Single",
+      "double" = "Double",
+      "triple" = "Triple",
+      "home_run" = "Home Run"
     )
   )+
   theme_minimal(base_size=14)+
@@ -798,10 +827,13 @@ ball_type_rates <- mlb_features_clustered |>
   group_by(cluster, bb_type) |> 
   summarize(count = n(), .groups = "drop") |> 
   group_by(cluster) |> 
-  mutate(rate = count / sum(count))
+  mutate(rate = count / sum(count)) |> 
+  mutate(bb_type = factor(bb_type, levels = c("ground_ball", "line_drive", "fly_ball", "popup")))
+
 
 #bar plot: all Type Rates by Cluster
-ggplot(ball_type_rates, aes(x = factor(cluster), y = rate, fill = bb_type)) +
+ball_type_rates |> 
+  ggplot( aes(x = factor(cluster), y = rate, fill = bb_type)) +
   geom_bar(stat = "identity", position = "dodge") +
   labs(
     x = "Cluster",
@@ -809,7 +841,14 @@ ggplot(ball_type_rates, aes(x = factor(cluster), y = rate, fill = bb_type)) +
     fill = "Ball Type",
     title = "Ball Type Rates by Cluster"
   ) +
-  ggthemes::scale_fill_colorblind() +
+  ggthemes::scale_fill_calc(
+    labels = c(
+      "fly_ball" = "Fly ball",
+      "ground_ball" = "Ground ball",
+      "line_drive" = "Line drive",
+      "popup" = "Popup"
+    )
+  ) +
   theme_minimal(base_size = 14) +
   theme(
     axis.title = element_text(face = "bold"),
@@ -852,48 +891,6 @@ mlb_features_clustered_subset_labels |>
 ##############
 #Appendix?
 
-#count types of hits per cluster
-
-cluster_hit_rates <- mlb_features_clustered |> 
-  filter(events %in% c("single", "double", "triple", "home_run")) |> 
-  group_by(cluster) |>
-  mutate(total_batted_balls = n()) |>  
-  group_by(cluster, events, total_batted_balls) |> 
-  summarize(hits = n(), .groups = "drop") |> 
-  mutate(hit_rate = hits / total_batted_balls)
-
-
-
-#scatterplot of count of each hit, color by cluster
-hit_type_plot <- cluster_hit_rates |> 
-  mutate(events = factor(events, levels = c("single", "double", "triple", "home_run"))) |> 
-  ggplot(aes(x = factor(cluster), y = hit_rate, fill = events)) +
-  geom_bar(stat = "identity", position = "dodge") +
-  labs(x = "Cluster", y = "Hit Rate", fill = "Event") +
-  scale_fill_manual(
-    values = c(
-      "single" = "#E69F00",   
-      "double" = "#009E73",   
-      "triple" = "#0072B2",   
-      "home_run" = "#D55E00"
-    ),
-    labels = c(
-      "single" = "Single",
-      "double" = "Double",
-      "triple" = "Triple",
-      "home_run" = "Home Run"
-    )
-    
-    
-  )+
-  theme_minimal(base_size=14)+
-  theme(
-    axis.title = element_text(face = "bold"),
-    legend.title =element_text(face = "bold"),
-    plot.title=element_blank()
-  )
-hit_type_plot
-
 
 #######################
 library(factoextra)
@@ -917,3 +914,74 @@ kmeans_result |>
     legend.title = element_text(face = "bold"),
     plot.title=element_blank(),
   )
+
+
+
+
+mlb_long <- mlb |> 
+  filter(!is.na(launch_speed), !is.na(launch_angle)) |> 
+  mutate(
+    single = as.integer(events == "single"),
+    double = as.integer(events == "double"),
+    triple = as.integer(events == "triple"),
+    home_run = as.integer(events == "home_run")
+  ) |> 
+  pivot_longer(
+    cols = c(single, double, triple, home_run),
+    names_to = "hit_type",
+    values_to = "is_event"
+  ) |> 
+  mutate(hit_type = case_when(
+    hit_type == "single" ~ "Single",
+    hit_type == "double" ~ "Double",
+    hit_type == "triple" ~ "Triple",
+    hit_type == "home_run" ~ "Home Run"
+  ),
+  hit_type = factor(hit_type, levels = c("Single", "Double", "Triple", "Home Run")))
+
+ggplot(mlb_long, aes(x = launch_speed, y = launch_angle)) +
+  stat_summary_hex(aes(z = is_event), fun = mean, bins = 40) +
+  scale_fill_viridis_c(option="C", name = "Event Rate", limits = c(0, 1)) +
+  facet_wrap(~hit_type) +
+  labs(
+    title = "Event Rate by Launch Speed & Angle",
+    x = "Launch Speed (mph)", y = "Launch Angle (°)"
+  ) +
+  theme_minimal(base_size=16)+
+  theme(
+    axis.title = element_text(face = "bold"),
+    legend.title = element_text(face = "bold"),
+    strip.text = element_text(face = "bold")
+  )
+
+
+mlb |> 
+  filter(!is.na(launch_speed), !is.na(launch_angle), !is.na(bb_type)) |> 
+  mutate(
+    bb_type = case_when(
+      bb_type == "line_drive" ~ "Line drive",
+      bb_type == "fly_ball" ~ "Fly ball",
+      bb_type == "ground_ball" ~ "Ground ball",
+      bb_type == "popup" ~ "Popup",
+      TRUE ~ "Other"
+    )) |> 
+  mutate(value = 1) |> 
+  pivot_wider(names_from = bb_type, values_from = value, values_fill = 0) |> 
+  pivot_longer(cols = c("Line drive", "Fly ball", "Ground ball", "Popup"), 
+               names_to = "BB Type", values_to = "is_type") |>
+  mutate(`BB Type` = factor(`BB Type`, levels = c("Ground ball", "Line drive", "Fly ball", "Popup"))) |> 
+  ggplot(aes(x = launch_speed, y = launch_angle)) +
+  stat_summary_hex(aes(z = is_type), fun = mean, bins = 40) +
+  scale_fill_viridis_c(option="C", name = "Batted Ball Rate", limits = c(0, 1)) +
+  facet_wrap(~ `BB Type`) +
+  labs(
+    title = "Batted Ball Type by Launch Speed & Angle",
+    x = "Launch Speed (mph)", y = "Launch Angle (°)"
+  ) +
+  theme_minimal(base_size=16)+
+  theme(
+    axis.title = element_text(face = "bold"),
+    legend.title = element_text(face = "bold"),
+    strip.text = element_text(face = "bold")
+  )
+

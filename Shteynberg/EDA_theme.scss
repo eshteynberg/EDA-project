@@ -43,8 +43,18 @@ h2 {
 
 }
 
+
 .callout-title {
   font-size: 1em;
   font-family: 'Roboto Slab', 'Times New Roman', serif;
 
 }
+
+.reveal .slides p,
+.reveal .slides li,
+.reveal .slides ul,
+.reveal .slides ol {
+  font-size: 1.03em;
+  line-height: 1.4;
+}
+
